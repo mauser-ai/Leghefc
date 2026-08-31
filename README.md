@@ -1,0 +1,258 @@
+# Fantacalcio Asta Manager
+
+Web app completa, senza database, per gestire un'asta del Fantacalcio tra amici:
+registrazione utenti, configurazione fantateam con settimane di anticipo, gestione
+di una o più aste, asta live in tempo reale, dashboard partecipante da smartphone,
+display generale per TV/proiettore, import del listone ed export finale delle rose.
+
+Tutta la persistenza è su **file CSV** in `/data`, protetti da lock (`flock`) per
+gestire scritture concorrenti da più dispositivi contemporaneamente. **Nessun
+database** (MySQL/PostgreSQL/SQLite) è utilizzato.
+
+## Stack
+
+- PHP 8+ (nessun framework), HTML5, CSS3, Bootstrap 5 (via CDN)
+- JavaScript vanilla + `fetch` (polling AJAX, nessun WebSocket)
+- Storage: CSV su filesystem, con locking per scritture atomiche
+- Sessioni PHP per l'autenticazione (`password_hash` / `password_verify`)
+- PhpSpreadsheet (opzionale, via Composer) solo per import/export XLSX
+
+## 1. Requisiti
+
+- PHP 8.0 o superiore con estensioni standard (`mbstring`, `json`); l'estensione
+  `zip` è necessaria solo per l'export "ZIP con tutte le rose".
+- Server Apache (o qualsiasi hosting PHP classico). Funziona anche con il server
+  di sviluppo integrato: `php -S localhost:8000`.
+- Nessun database richiesto.
+
+## 2. Installazione
+
+1. Carica il contenuto del repository sull'hosting (o clonalo).
+2. Assicurati che la cartella `/data` (e le sue sottocartelle `backups`, `locks`,
+   `tmp_import`) siano **scrivibili** dal processo PHP:
+   ```bash
+   chmod -R 775 data
+   ```
+3. Punta il document root del sito alla root del progetto (dove si trova
+   `index.php`).
+4. (Opzionale, solo per import/export XLSX) installa PhpSpreadsheet:
+   ```bash
+   composer require phpoffice/phpspreadsheet
+   ```
+   Senza questa libreria l'app funziona comunque al 100% usando CSV.
+
+Le cartelle `/data`, `/lib`, `/partials` e `/scripts` includono un `.htaccess`
+che blocca l'accesso diretto via browser (i CSV contengono, tra l'altro, gli
+hash delle password: **non devono mai essere scaricabili via URL**). Perché
+funzioni, la configurazione Apache del sito deve avere `AllowOverride All` (o
+almeno `AllowOverride Limit AuthConfig`) sulla document root — è il default
+sulla quasi totalità degli hosting condivisi. Nota: il server di sviluppo
+integrato `php -S` **non legge i file `.htaccess`** (limitazione nota di PHP,
+non un problema dell'app): usalo solo per test locali, mai in produzione.
+
+## 3. Dati demo (per testare subito)
+
+Il repository include già dati demo pronti all'uso (1 admin, 10 utenti con
+fantateam, 1 asta, 50 giocatori fittizi). Per rigenerarli da zero:
+
+```bash
+php scripts/seed_demo.php --force
+```
+
+Credenziali demo:
+
+| Ruolo  | Nickname       | Password  |
+|--------|----------------|-----------|
+| Admin  | `admin`        | `admin123`|
+| Utente | `user1`…`user10` | `demo123` |
+
+Codice invito dell'asta demo: **`DEMO26`**.
+
+> I 50 giocatori demo hanno nomi e squadre **completamente inventati**: nessun
+> dato reale di calciatori è incluso.
+
+## 4. Creazione di un amministratore (senza usare i dati demo)
+
+Non esiste un form dedicato per creare admin dall'interfaccia (per sicurezza).
+Per creare il primo admin:
+
+1. Registrati normalmente da `/register.php` (l'utente viene creato con
+   `role = user`).
+2. Apri `data/users.csv` e cambia manualmente il valore `role` di quella riga
+   da `user` ad `admin` (mantenendo intatte le altre colonne, incluso
+   l'hash password).
+3. Effettua nuovamente il login: la sessione verrà creata con il ruolo admin.
+
+In alternativa usa direttamente l'admin demo (`admin` / `admin123`).
+
+## 5. Flusso utente
+
+```
+Registrazione (nickname + password)
+  -> Primo login
+  -> Configurazione nome fantateam (/profile.php)
+  -> Dashboard (/dashboard.php)
+  -> Inserimento codice invito (/join-auction.php)
+  -> Attesa (l'asta non è ancora LIVE)
+  -> Giorno dell'asta: stesso login, stessa squadra già configurata
+  -> Asta LIVE: dashboard mostra rosa/crediti in tempo reale
+  -> Fine asta: export rose
+```
+
+## 6. Flusso amministratore
+
+1. Login come admin, poi `/admin/auctions.php` → crea una nuova asta
+   (nome, data anche futura, budget, limiti rosa POR/DIF/CEN/ATT, codice
+   invito). L'asta nasce in stato `DRAFT`.
+2. `/import.php` → carica il listone giocatori (CSV o XLSX) e mappa le colonne
+   del file sui campi richiesti (`name`, `real_team`, `role`, `quotation`,
+   `fvm`) — la mappatura non dipende dall'ordine delle colonne del file.
+3. Gli utenti si registrano autonomamente e inseriscono il codice invito da
+   `/join-auction.php` per associare il proprio fantateam all'asta.
+4. Quando tutti i partecipanti sono pronti, porta l'asta a `OPEN` e poi a
+   `LIVE` da `/admin/auctions.php`.
+5. Da `/admin/auction.php?id=ID` gestisci l'asta in tempo reale: cerca un
+   giocatore, selezionalo, seleziona il fantateam, inserisci il prezzo,
+   premi **ASSEGNA** (o Invio). Puoi modificare/annullare/svincolare un
+   acquisto in qualsiasi momento.
+6. Apri `/display.php?auction=ID` su un PC collegato a TV/proiettore per la
+   vista generale (leggibile da lontano, aggiornamento ogni secondo).
+7. A fine asta, porta lo stato a `COMPLETED` e poi `ARCHIVED`, quindi esporta
+   le rose da `/export.php?auction=ID`.
+
+## 7. Ricerca e gestione giocatori live
+
+Nella schermata `/admin/auction.php`:
+
+- **Sinistra**: ricerca testuale (case-insensitive, per sottostringa), filtro
+  per ruolo, filtro per squadra reale, checkbox "solo disponibili".
+- **Centro**: dettagli del giocatore selezionato (nome, ruolo, squadra,
+  quotazione, FVM) e pulsante "Metti all'asta" (visibile su Display e
+  dashboard dei partecipanti).
+- **Destra**: elenco fantateam con crediti residui, posti disponibili,
+  massimo spendibile. Click su una squadra per selezionarla, poi inserisci il
+  prezzo e premi **ASSEGNA** (o **Invio** nel campo prezzo).
+
+Prima di ogni acquisto il sistema verifica: crediti disponibili, disponibilità
+del giocatore, limite massimo per ruolo, prezzo ≥ 1 e possibilità matematica
+di completare la rosa (offerta massima = crediti residui − posti ancora da
+riempire dopo l'acquisto corrente).
+
+Lo storico acquisti in fondo alla pagina permette di **modificare** (prezzo,
+squadra) o **svincolare** (soft-delete, `active=0`) qualsiasi acquisto. Il
+pulsante "Annulla ultima operazione" annulla l'ultimo acquisto registrato
+sull'intera asta.
+
+## 8. Dashboard partecipante
+
+`/dashboard.php` (mobile-first) mostra nome squadra, asta associata, stato,
+data, crediti iniziali/residui. Quando l'asta è `LIVE`, la pagina mostra
+automaticamente (con polling AJAX ogni 1.5s, nessun refresh manuale): rosa
+attuale divisa per ruolo, posti disponibili, ultimo acquisto, prezzo medio per
+ruolo, massimo spendibile e giocatore attualmente all'asta.
+
+## 9. Export finale
+
+Da `/export.php?auction=ID`:
+
+- **CSV completo asta** / **CSV per singola squadra**
+- **XLSX completo** / **XLSX per singola squadra** (richiede PhpSpreadsheet)
+- **ZIP con tutte le rose** (un CSV per squadra, richiede l'estensione `zip`)
+
+Il formato di export (nomi colonna, ordine, separatore, encoding) è isolato in
+`lib/exporters/FantacalcioExporter.php`. **Il formato ufficiale richiesto da
+Leghe Fantacalcio non era disponibile in questo repository**: l'exporter usa
+quindi una struttura generica e ragionevole. Se in futuro viene fornito un
+file CSV/XLSX di esempio ufficiale, basta adattare le costanti/i metodi di
+quella singola classe (nessun'altra parte dell'app dipende da quel formato).
+
+## 10. Backup
+
+Uno snapshot dei CSV principali viene creato automaticamente in
+`data/backups/<timestamp>/` ogni volta che un'operazione modifica i dati
+(creazione asta, acquisto, annullamento, modifica, import listone, cambio
+stato) — **mai** ad ogni polling AJAX. Vengono conservati al massimo gli
+ultimi 20 snapshot (i più vecchi vengono rimossi automaticamente).
+
+## 11. Recovery
+
+Per ripristinare uno stato precedente in caso di problemi:
+
+1. Ferma temporaneamente l'accesso all'app (o mettila in manutenzione).
+2. Individua lo snapshot desiderato in `data/backups/` (ordinati per
+   timestamp).
+3. Copia i file `.csv` dallo snapshot su `data/`, sovrascrivendo quelli
+   correnti.
+4. Riavvia l'accesso.
+
+Lo storico completo di tutte le azioni (chi ha fatto cosa e quando) resta
+comunque disponibile in `data/audit.csv`, che non viene mai troncato
+automaticamente.
+
+## 12. Struttura dei CSV
+
+Tutti i file vivono in `/data` e hanno sempre una riga di intestazione.
+
+| File | Colonne |
+|---|---|
+| `users.csv` | `id, nickname, password_hash, created_at, last_login, active, role` |
+| `teams.csv` | `id, user_id, name, coach_name, logo, created_at, updated_at, active` |
+| `auctions.csv` | `id, name, invite_code, status, auction_date, initial_budget, goalkeepers, defenders, midfielders, attackers, created_at, updated_at` |
+| `auction_teams.csv` | `id, auction_id, team_id, enabled, joined_at` |
+| `players.csv` | `id, name, real_team, role, quotation, fvm` (listone globale) |
+| `auction_players.csv` | `auction_id, player_id, available` (disponibilità **per asta**, non globale) |
+| `purchases.csv` | `id, auction_id, player_id, team_id, price, timestamp, active` (storico ufficiale; i crediti residui si calcolano sempre dinamicamente: `initial_budget - SUM(price WHERE active=1)`) |
+| `current_auction.csv` | `auction_id, player_id, updated_at` (giocatore attualmente chiamato, per asta) |
+| `settings.csv` | `key, value` |
+| `audit.csv` | `timestamp, user_id, action, auction_id, player_id, team_id, price, previous_value, new_value` |
+
+Stati asta possibili: `DRAFT → OPEN → LIVE → COMPLETED → ARCHIVED`.
+Ruoli giocatore: `P` (Portiere), `D` (Difensore), `C` (Centrocampista), `A` (Attaccante).
+
+## 13. Architettura del codice
+
+```
+/lib/CsvStorage.php        storage CSV centralizzato (locking, transazioni atomiche)
+/lib/Schema.php             nomi file e intestazioni colonna centralizzati
+/lib/Auth.php                sessioni, requireLogin()/requireAdmin()
+/lib/UserService.php         registrazione/login/attivazione utenti
+/lib/TeamService.php         gestione fantateam
+/lib/AuctionService.php      logica asta: acquisti, undo, svincoli, modifiche, budget
+/lib/PlayerService.php       listone e disponibilità per asta
+/lib/ImportService.php       parsing e mappatura import listone (CSV/XLSX)
+/lib/AuditService.php        scrittura storico azioni
+/lib/BackupService.php       snapshot periodici dei CSV
+/lib/exporters/FantacalcioExporter.php   formato export (unico punto da adattare)
+
+/api/*.php    endpoint JSON usati dal frontend via fetch/AJAX
+/admin/*.php  area amministrazione
+/*.php        pagine pubbliche/autenticate (login, dashboard, display, ecc.)
+```
+
+Nessuna pagina PHP contiene logica di business diretta: tutte le pagine e gli
+endpoint API richiamano i servizi in `/lib`.
+
+## 14. Sicurezza
+
+- Password mai salvate in chiaro: `password_hash()` / `password_verify()`.
+- `session_regenerate_id(true)` dopo ogni login.
+- Tutti gli endpoint `/api/*` verificano la sessione (`Auth::apiRequireLogin`/
+  `apiRequireAdmin`); le operazioni di scrittura sull'asta sono riservate agli
+  admin.
+- Verifica di ownership sulle squadre (`team.user_id === session.user_id`),
+  eccetto per gli admin.
+- Validazione lato server su tutti gli input (prezzo, ruoli, limiti rosa,
+  budget); il frontend non è mai considerato affidabile.
+- Token di upload generati server-side per l'import (nessun path traversal).
+- `.htaccess` che nega l'accesso diretto a `/data`, `/lib`, `/partials`,
+  `/scripts`.
+
+## 15. Affidabilità con più dispositivi
+
+Le operazioni che modificano l'asta (acquisto, annullamento, svincolo,
+modifica) sono racchiuse in un lock esclusivo per asta
+(`data/locks/auction_<id>.lock`) che garantisce l'atomicità dell'intera
+sequenza "leggi stato → valida → scrivi", anche quando coinvolge più file CSV
+contemporaneamente (`purchases.csv`, `auction_players.csv`, `audit.csv`). Non
+è possibile acquistare due volte lo stesso giocatore, anche con più
+dispositivi collegati in contemporanea (8-12+ testati).

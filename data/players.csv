@@ -1,0 +1,51 @@
+id,name,real_team,role,quotation,fvm
+1,"Matteo Greco","Draghi Azzurri",P,9,54
+2,"Alessio Rinaldi","Vulcano United",P,17,119
+3,"Roberto Colombo","Leoni United",P,18,162
+4,"Matteo Rinaldi","Vulcano United",P,6,42
+5,"Paolo Fontana","Aquile Rossoblu",P,10,60
+6,"Nicola Bruno","Leoni United",P,23,138
+7,"Marco Russo","Falchi Calcio",P,24,240
+8,"Matteo Fontana","Falchi Calcio",P,16,96
+9,"Riccardo Greco","Leoni United",D,10,60
+10,"Enrico Bruno","Tigre Verde FC",D,8,64
+11,"Enrico Costa","Pantere FC",D,5,40
+12,"Andrea Ferrari","Pantere FC",D,19,171
+13,"Marco Mancini","Tigre Verde FC",D,15,120
+14,"Luca Marino","Pantere FC",D,9,90
+15,"Luca Bruno","Aquile Rossoblu",D,13,91
+16,"Marco Ricci","Aquile Rossoblu",D,13,91
+17,"Roberto Rinaldi","Orsi Calcio",D,17,170
+18,"Nicola Gallo","Orsi Calcio",D,11,99
+19,"Matteo Gallo","Leoni United",D,9,63
+20,"Simone Bianchi","Draghi Azzurri",D,19,114
+21,"Matteo Fontana","Lupi Sport Club",D,13,104
+22,"Andrea Rinaldi","Orsi Calcio",D,15,150
+23,"Paolo Ricci","Vulcano United",D,18,180
+24,"Andrea Bruno","Draghi Azzurri",D,12,72
+25,"Riccardo Villa","Falchi Calcio",C,28,280
+26,"Simone Bruno","Orsi Calcio",C,26,156
+27,"Nicola Greco","Tigre Verde FC",C,17,136
+28,"Davide Gallo","Draghi Azzurri",C,17,102
+29,"Simone Costa","Aquile Rossoblu",C,13,117
+30,"Andrea Bianchi","Leoni United",C,28,196
+31,"Roberto Mancini","Falchi Calcio",C,19,114
+32,"Roberto Conti","Vulcano United",C,15,120
+33,"Giulio Ricci","Pantere FC",C,26,182
+34,"Paolo Greco","Leoni United",C,20,160
+35,"Enrico Greco","Draghi Azzurri",C,21,168
+36,"Riccardo Gallo","Aquile Rossoblu",C,8,56
+37,"Giulio Russo","Draghi Azzurri",C,23,207
+38,"Paolo Bianchi","Leoni United",C,24,192
+39,"Paolo Marino","Aquile Rossoblu",C,14,98
+40,"Paolo Russo","Aquile Rossoblu",C,7,56
+41,"Marco Villa","Draghi Azzurri",A,12,96
+42,"Enrico Greco","Lupi Sport Club",A,33,198
+43,"Luca Bianchi","Vulcano United",A,45,405
+44,"Andrea Fontana","Tigre Verde FC",A,36,216
+45,"Luca Colombo","Aquile Rossoblu",A,18,162
+46,"Roberto Fontana","Tigre Verde FC",A,14,112
+47,"Nicola Fontana","Falchi Calcio",A,25,225
+48,"Simone Bianchi","Tigre Verde FC",A,32,256
+49,"Paolo Russo","Grifoni FC",A,19,133
+50,"Alessio Gallo","Orsi Calcio",A,25,250

@@ -1,0 +1,14 @@
+/vendor/
+/composer.lock
+
+# Snapshot di backup e file temporanei runtime: non vanno versionati,
+# ma le cartelle restano tracciate grazie ai .gitkeep.
+/data/backups/*
+!/data/backups/.gitkeep
+/data/locks/*
+!/data/locks/.gitkeep
+/data/tmp_import/*
+!/data/tmp_import/.gitkeep
+
+.DS_Store
+*.swp

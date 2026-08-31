@@ -1,0 +1,11 @@
+{
+    "name": "leghefc/fantacalcio-asta",
+    "description": "Fantacalcio Asta Manager - gestione aste Fantacalcio senza database, storage su CSV",
+    "type": "project",
+    "require": {
+        "php": ">=8.0"
+    },
+    "suggest": {
+        "phpoffice/phpspreadsheet": "Necessario solo per l'import/export in formato XLSX. Senza questa libreria l'app funziona comunque al 100% usando CSV."
+    }
+}

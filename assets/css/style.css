@@ -1,0 +1,197 @@
+/* Fantacalcio Asta Manager - tema scuro condiviso */
+
+:root {
+  --fa-bg: #0f1116;
+  --fa-surface: #171a21;
+  --fa-surface-alt: #1f232c;
+  --fa-border: #2a2f3a;
+  --fa-accent: #22c55e;
+  --fa-accent-2: #3b82f6;
+  --fa-warn: #f59e0b;
+  --fa-danger: #ef4444;
+  --fa-text-dim: #9aa3b2;
+}
+
+body {
+  background-color: var(--fa-bg);
+  color: #e7e9ee;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+}
+
+.app-navbar {
+  background-color: var(--fa-surface);
+  border-bottom: 1px solid var(--fa-border);
+}
+
+.card, .list-group-item {
+  background-color: var(--fa-surface);
+  border-color: var(--fa-border);
+  color: #e7e9ee;
+}
+
+.card-header {
+  background-color: var(--fa-surface-alt);
+  border-color: var(--fa-border);
+  font-weight: 600;
+}
+
+.table {
+  --bs-table-bg: transparent;
+  --bs-table-color: #e7e9ee;
+  --bs-table-border-color: var(--fa-border);
+}
+
+.form-control, .form-select {
+  background-color: var(--fa-surface-alt);
+  border-color: var(--fa-border);
+  color: #e7e9ee;
+}
+.form-control:focus, .form-select:focus {
+  background-color: var(--fa-surface-alt);
+  color: #fff;
+  border-color: var(--fa-accent-2);
+  box-shadow: 0 0 0 .2rem rgba(59,130,246,.25);
+}
+
+.auth-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.auth-card {
+  max-width: 420px;
+  width: 100%;
+}
+
+.credit-big {
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+.credit-medium {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+.credit-positive { color: var(--fa-accent); }
+.credit-warn { color: var(--fa-warn); }
+.credit-danger { color: var(--fa-danger); }
+
+.badge-role-P { background-color: #eab308 !important; color: #111 !important; }
+.badge-role-D { background-color: #3b82f6 !important; }
+.badge-role-C { background-color: #22c55e !important; color: #111 !important; }
+.badge-role-A { background-color: #ef4444 !important; }
+
+.status-badge-DRAFT { background-color: #6b7280 !important; }
+.status-badge-OPEN { background-color: #3b82f6 !important; }
+.status-badge-LIVE { background-color: #ef4444 !important; }
+.status-badge-COMPLETED { background-color: #22c55e !important; color:#111 !important; }
+.status-badge-ARCHIVED { background-color: #374151 !important; }
+
+/* ---------------- Display TV ---------------- */
+.display-body {
+  background: radial-gradient(circle at top, #14181f 0%, #0a0c10 100%);
+  font-size: 1.15rem;
+  padding: 1rem 1.5rem;
+}
+.display-current {
+  background: linear-gradient(135deg, #1b2230, #10131a);
+  border: 2px solid var(--fa-accent);
+  border-radius: 1rem;
+  padding: 1.5rem 2rem;
+}
+.display-current .player-name {
+  font-size: 3.2rem;
+  font-weight: 800;
+}
+.display-current .player-meta {
+  font-size: 1.4rem;
+  color: var(--fa-text-dim);
+}
+.display-last {
+  background: var(--fa-surface);
+  border-radius: 1rem;
+  border: 1px solid var(--fa-border);
+  padding: 1rem 1.5rem;
+}
+.display-team-card {
+  background: var(--fa-surface);
+  border: 1px solid var(--fa-border);
+  border-radius: .75rem;
+  padding: .9rem 1rem;
+}
+.display-team-card .team-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+.display-team-card .team-credits {
+  font-size: 2rem;
+  font-weight: 800;
+}
+.role-pill {
+  display: inline-block;
+  padding: .15rem .5rem;
+  border-radius: .4rem;
+  font-size: .85rem;
+  font-weight: 700;
+  margin-right: .25rem;
+}
+
+/* ---------------- Mobile dashboard ---------------- */
+.mobile-credit-strip {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--fa-surface);
+  border-bottom: 1px solid var(--fa-border);
+}
+
+.roster-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: .5rem .75rem;
+  border-bottom: 1px solid var(--fa-border);
+}
+.roster-row:last-child { border-bottom: none; }
+
+/* ---------------- Admin auction ---------------- */
+.admin-live-col {
+  height: calc(100vh - 140px);
+  overflow-y: auto;
+}
+.player-search-item {
+  cursor: pointer;
+  padding: .5rem .75rem;
+  border-bottom: 1px solid var(--fa-border);
+}
+.player-search-item:hover, .player-search-item.selected {
+  background-color: var(--fa-surface-alt);
+}
+.player-search-item.unavailable {
+  opacity: .4;
+}
+.team-pick-card {
+  cursor: pointer;
+  transition: border-color .15s ease;
+}
+.team-pick-card:hover {
+  border-color: var(--fa-accent-2) !important;
+}
+.team-pick-card.selected {
+  border-color: var(--fa-accent) !important;
+  box-shadow: 0 0 0 .15rem rgba(34,197,94,.35);
+}
+
+.pulse-live {
+  animation: pulse-live 1.6s infinite;
+}
+@keyframes pulse-live {
+  0% { box-shadow: 0 0 0 0 rgba(239,68,68,.5); }
+  70% { box-shadow: 0 0 0 10px rgba(239,68,68,0); }
+  100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+}
+
+.text-dim { color: var(--fa-text-dim); }
