@@ -114,11 +114,16 @@ Registrazione (nickname + password)
   -> Inserimento codice invito (/join-auction.php)
   -> Attesa (l'asta non è ancora LIVE)
   -> Giorno dell'asta: stesso login, stessa squadra già configurata
-  -> Asta LIVE: dashboard mostra rosa/crediti in tempo reale
+  -> Asta LIVE: ogni partecipante dichiara dal proprio telefono i giocatori
+     presi e il prezzo pagato; dashboard e display si aggiornano in tempo reale
   -> Fine asta: export rose
 ```
 
 ## 6. Flusso amministratore
+
+L'asta si svolge **verbalmente/di persona come sempre** (o in videochiamata):
+l'admin non inserisce gli acquisti al posto dei partecipanti. Il suo ruolo è
+predisporre l'asta e fare da arbitro in caso di errori:
 
 1. Login come admin, poi `/admin/auctions.php` → crea una nuova asta
    (nome, data anche futura, budget, limiti rosa POR/DIF/CEN/ATT, codice
@@ -128,14 +133,19 @@ Registrazione (nickname + password)
    `fvm`) — la mappatura non dipende dall'ordine delle colonne del file.
 3. Gli utenti si registrano autonomamente e inseriscono il codice invito da
    `/join-auction.php` per associare il proprio fantateam all'asta.
+   L'admin può anche associare/rimuovere una squadra da un'asta manualmente
+   da `/admin/users.php` (senza mai eliminare l'utente).
 4. Quando tutti i partecipanti sono pronti, porta l'asta a `OPEN` e poi a
-   `LIVE` da `/admin/auctions.php`.
-5. Da `/admin/auction.php?id=ID` gestisci l'asta in tempo reale: cerca un
-   giocatore, selezionalo, seleziona il fantateam, inserisci il prezzo,
-   premi **ASSEGNA** (o Invio). Puoi modificare/annullare/svincolare un
-   acquisto in qualsiasi momento.
-6. Apri `/display.php?auction=ID` su un PC collegato a TV/proiettore per la
+   `LIVE` da `/admin/auctions.php`. **Da questo momento ogni partecipante
+   dichiara da solo, dal proprio telefono, i giocatori che si aggiudica** (vedi
+   punto 8).
+5. Apri `/display.php?auction=ID` su un PC collegato a TV/proiettore per la
    vista generale (leggibile da lontano, aggiornamento ogni secondo).
+6. Da `/admin/auction.php?id=ID` l'admin supervisiona l'asta: può comunque
+   cercare un giocatore e assegnarlo/correggerlo per conto di una squadra (per
+   chi non ha il telefono a portata di mano, o in caso di errori), annullare
+   l'ultima operazione, modificare prezzo/squadra di un acquisto o svincolare
+   un giocatore — vedi punto 7.
 7. A fine asta, porta lo stato a `COMPLETED` e poi `ARCHIVED`, quindi esporta
    le rose da `/export.php?auction=ID`.
 
@@ -165,36 +175,54 @@ al giorno dell'asta man mano che le quotazioni cambiano. In dettaglio:
   in quel caso completa/archivia quell'asta o creane una nuova prima di
   ricaricare un listone aggiornato.
 
-## 7. Ricerca e gestione giocatori live
+## 7. Pannello admin (supervisione e correzioni)
 
 Nella schermata `/admin/auction.php`:
 
 - **Sinistra**: ricerca testuale (case-insensitive, per sottostringa), filtro
-  per ruolo, filtro per squadra reale, checkbox "solo disponibili".
-- **Centro**: dettagli del giocatore selezionato (nome, ruolo, squadra,
-  quotazione, FVM) e pulsante "Metti all'asta" (visibile su Display e
-  dashboard dei partecipanti).
+  per ruolo, filtro per squadra reale, ordinamento (nome, ruolo, quotazione,
+  fantamedia/FVM). Un pulsante 📣 su ogni riga imposta quel giocatore come
+  "attualmente all'asta" (visibile su Display e sulle dashboard dei
+  partecipanti) — utile per annunciarlo prima che parta l'offerta verbale.
+- Cliccando su un giocatore si apre un popup: scegli la squadra assegnataria e
+  il prezzo, poi **ASSEGNA** (o **Invio**). Questa è la via "di emergenza" per
+  l'admin (partecipante senza telefono a portata di mano, errore da
+  correggere); il flusso normale è l'auto-dichiarazione dei partecipanti
+  (punto 8).
 - **Destra**: elenco fantateam con crediti residui, posti disponibili,
-  massimo spendibile. Click su una squadra per selezionarla, poi inserisci il
-  prezzo e premi **ASSEGNA** (o **Invio** nel campo prezzo).
+  massimo spendibile, aggiornato in tempo reale.
 
-Prima di ogni acquisto il sistema verifica: crediti disponibili, disponibilità
-del giocatore, limite massimo per ruolo, prezzo ≥ 1 e possibilità matematica
-di completare la rosa (offerta massima = crediti residui − posti ancora da
-riempire dopo l'acquisto corrente).
+Prima di ogni acquisto (sia da admin che da partecipante) il sistema verifica:
+crediti disponibili, disponibilità del giocatore, limite massimo per ruolo,
+prezzo ≥ 1 e possibilità matematica di completare la rosa (offerta massima =
+crediti residui − posti ancora da riempire dopo l'acquisto corrente). Se due
+persone dichiarano lo stesso giocatore quasi in contemporanea, vince chi
+arriva per primo al server (lock per asta, vedi punto 15): l'altro riceve un
+errore "giocatore non disponibile".
 
-Lo storico acquisti in fondo alla pagina permette di **modificare** (prezzo,
-squadra) o **svincolare** (soft-delete, `active=0`) qualsiasi acquisto. Il
-pulsante "Annulla ultima operazione" annulla l'ultimo acquisto registrato
-sull'intera asta.
+Lo storico acquisti in fondo alla pagina permette all'admin di **modificare**
+(prezzo, squadra) o **svincolare** (soft-delete, `active=0`) qualsiasi
+acquisto — anche quelli auto-dichiarati dai partecipanti. Il pulsante "Annulla
+ultima operazione" annulla l'ultimo acquisto registrato sull'intera asta.
 
-## 8. Dashboard partecipante
+## 8. Dashboard partecipante e auto-dichiarazione acquisti
 
 `/dashboard.php` (mobile-first) mostra nome squadra, asta associata, stato,
 data, crediti iniziali/residui. Quando l'asta è `LIVE`, la pagina mostra
 automaticamente (con polling AJAX ogni 1.5s, nessun refresh manuale): rosa
 attuale divisa per ruolo, posti disponibili, ultimo acquisto, prezzo medio per
 ruolo, massimo spendibile e giocatore attualmente all'asta.
+
+**Ogni partecipante gestisce da solo i propri acquisti.** Sotto la card
+"🛒 Compra un giocatore" può cercare/filtrare/ordinare i giocatori ancora
+disponibili (stessi filtri del pannello admin: ruolo, squadra reale,
+ordinamento per nome/ruolo/quotazione/fantamedia). Quando si aggiudica un
+giocatore durante l'asta dal vivo, lo cerca, ci clicca sopra, inserisce il
+prezzo pagato nel popup e conferma con **"HO PRESO QUESTO GIOCATORE"** (o
+Invio). Il sistema applica automaticamente le stesse validazioni di budget e
+limiti di ruolo; l'acquisto può sempre essere corretto dall'admin in caso di
+errore (punto 7). Un partecipante può dichiarare acquisti solo per la propria
+squadra (verificato lato server), mai per conto di altri.
 
 ## 9. Export finale
 

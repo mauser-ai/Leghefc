@@ -75,20 +75,138 @@
     return div.innerHTML;
   }
 
-  function poll() {
-    fetch(`${BASE}/api/team_state.php?auction=${AUCTION_ID}&team=${TEAM_ID}`, { credentials: 'same-origin' })
+  let latestState = null;
+
+  function fetchState() {
+    return fetch(`${BASE}/api/team_state.php?auction=${AUCTION_ID}&team=${TEAM_ID}`, { credentials: 'same-origin' })
       .then(r => r.json())
       .then(data => {
         if (data.success) {
+          latestState = data;
           render(data);
           if (data.auction_status !== 'LIVE') {
             location.reload();
           }
         }
-      })
-      .catch(() => {})
-      .finally(() => setTimeout(poll, POLL_MS));
+        return data;
+      });
   }
 
-  poll();
+  function pollLoop() {
+    fetchState().catch(() => {}).finally(() => setTimeout(pollLoop, POLL_MS));
+  }
+
+  pollLoop();
+
+  // ---------------- Compra un giocatore (autodichiarazione) ----------------
+
+  const el = (id) => document.getElementById(id);
+  let buyModal = null;
+  let buySelectedPlayer = null;
+  let buySearchDebounce = null;
+
+  function jsonPost(path, body) {
+    return fetch(BASE + path, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }).then(r => r.json());
+  }
+
+  function doBuySearch() {
+    const q = el('buySearchQuery').value;
+    const role = el('buyFilterRole').value;
+    const team = el('buyFilterTeam').value;
+    const sort = el('buyFilterSort').value;
+
+    const params = new URLSearchParams({ auction: AUCTION_ID, q, role, team, sort, available: '1' });
+    fetch(BASE + '/api/players.php?' + params.toString(), { credentials: 'same-origin' })
+      .then(r => r.json())
+      .then(data => {
+        if (!data.success) return;
+        const box = el('buyPlayerResults');
+        if (data.players.length === 0) {
+          box.innerHTML = '<p class="text-dim p-2">Nessun giocatore disponibile trovato.</p>';
+          return;
+        }
+        box.innerHTML = data.players.map(p => `
+          <div class="player-search-item" data-id="${p.id}">
+            <div><span class="badge badge-role-${p.role} me-1">${p.role}</span>${escapeHtml(p.name)}</div>
+            <div class="text-dim small">${escapeHtml(p.real_team)} &middot; Quot. ${escapeHtml(p.quotation)} &middot; FVM ${escapeHtml(p.fvm)}</div>
+          </div>`).join('');
+
+        box.querySelectorAll('.player-search-item').forEach(item => {
+          const player = data.players.find(p => String(p.id) === item.dataset.id);
+          item.addEventListener('click', () => openBuyModal(player));
+        });
+      });
+  }
+
+  function openBuyModal(player) {
+    buySelectedPlayer = player;
+    el('buyError').classList.add('d-none');
+    const maxBid = latestState ? latestState.max_bid : null;
+    const remaining = latestState ? latestState.remaining_budget : null;
+    el('buyPlayerInfo').innerHTML = `
+      <div class="fs-3 fw-bold">${escapeHtml(player.name)}</div>
+      <div class="text-dim mb-2">${escapeHtml(player.real_team)} &middot; <span class="badge badge-role-${player.role}">${ROLE_LABELS[player.role] || player.role}</span></div>
+      <div class="d-flex justify-content-center gap-4 mb-2">
+        <div><div class="text-dim small">Quotazione</div><div class="fw-bold">${escapeHtml(player.quotation)}</div></div>
+        <div><div class="text-dim small">FVM</div><div class="fw-bold">${escapeHtml(player.fvm)}</div></div>
+      </div>
+      <div class="text-dim small">Crediti residui: <strong>${remaining ?? '-'}</strong> &middot; Massimo spendibile: <strong>${maxBid ?? '-'}</strong></div>
+    `;
+    el('buyPriceInput').value = '';
+    if (!buyModal) {
+      buyModal = new bootstrap.Modal(el('buyModal'));
+    }
+    buyModal.show();
+    setTimeout(() => el('buyPriceInput').focus(), 300);
+  }
+
+  function doConfirmBuy() {
+    el('buyError').classList.add('d-none');
+    if (!buySelectedPlayer) return;
+    const price = parseInt(el('buyPriceInput').value, 10);
+    if (!price || price < 1) {
+      showBuyError('Inserisci un prezzo valido (>= 1).');
+      return;
+    }
+    jsonPost('/api/buy.php', { auction_id: AUCTION_ID, player_id: buySelectedPlayer.id, team_id: TEAM_ID, price })
+      .then(res => {
+        if (res.success) {
+          buyModal.hide();
+          buySelectedPlayer = null;
+          doBuySearch();
+          fetchState();
+        } else {
+          showBuyError(res.error || 'Errore sconosciuto.');
+        }
+      });
+  }
+
+  function showBuyError(msg) {
+    const box = el('buyError');
+    box.textContent = msg;
+    box.classList.remove('d-none');
+  }
+
+  if (el('buyPlayerResults')) {
+    el('btnConfirmBuy').addEventListener('click', doConfirmBuy);
+    el('buyPriceInput').addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') {
+        ev.preventDefault();
+        doConfirmBuy();
+      }
+    });
+    el('buySearchQuery').addEventListener('input', () => {
+      clearTimeout(buySearchDebounce);
+      buySearchDebounce = setTimeout(doBuySearch, 250);
+    });
+    ['buyFilterRole', 'buyFilterTeam', 'buyFilterSort'].forEach(id => {
+      el(id).addEventListener('change', doBuySearch);
+    });
+    doBuySearch();
+  }
 })();

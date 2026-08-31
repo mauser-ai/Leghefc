@@ -106,10 +106,16 @@ final class PlayerService
         }
     }
 
+    /** Ordinamenti disponibili per la ricerca giocatori. */
+    public const SORT_NAME = 'name';
+    public const SORT_ROLE = 'role';
+    public const SORT_QUOTATION = 'quotation';
+    public const SORT_FVM = 'fvm';
+
     /**
-     * Ricerca giocatori per una specifica asta con filtri.
+     * Ricerca giocatori per una specifica asta con filtri e ordinamento.
      */
-    public static function search(int $auctionId, string $query = '', string $role = '', string $realTeam = '', bool $onlyAvailable = false): array
+    public static function search(int $auctionId, string $query = '', string $role = '', string $realTeam = '', bool $onlyAvailable = false, string $sortBy = self::SORT_NAME): array
     {
         $availability = self::availabilityMap($auctionId);
         $query = mb_strtolower(trim($query));
@@ -136,9 +142,20 @@ final class PlayerService
             $results[] = $p;
         }
 
-        usort($results, fn($a, $b) => strcmp($a['name'], $b['name']));
+        usort($results, match ($sortBy) {
+            self::SORT_ROLE => fn($a, $b) => self::roleOrder($a['role']) <=> self::roleOrder($b['role']) ?: strcmp($a['name'], $b['name']),
+            self::SORT_QUOTATION => fn($a, $b) => (int)$b['quotation'] <=> (int)$a['quotation'] ?: strcmp($a['name'], $b['name']),
+            self::SORT_FVM => fn($a, $b) => (int)$b['fvm'] <=> (int)$a['fvm'] ?: strcmp($a['name'], $b['name']),
+            default => fn($a, $b) => strcmp($a['name'], $b['name']),
+        });
 
         return $results;
+    }
+
+    private static function roleOrder(string $role): int
+    {
+        $index = array_search($role, Schema::ROLES, true);
+        return $index === false ? 99 : $index;
     }
 
     public static function realTeams(): array

@@ -38,13 +38,13 @@ require __DIR__ . '/../partials/header.php';
 
   <div class="row g-3">
     <!-- SINISTRA: ricerca -->
-    <div class="col-lg-4">
+    <div class="col-lg-7">
       <div class="card">
-        <div class="card-header">🔍 Ricerca giocatore</div>
+        <div class="card-header">🔍 Ricerca giocatore <span class="text-dim fw-normal small">— clicca un giocatore per assegnarlo</span></div>
         <div class="card-body">
           <input type="text" id="searchQuery" class="form-control mb-2" placeholder="Cerca per nome...">
           <div class="row g-2 mb-2">
-            <div class="col-6">
+            <div class="col-4">
               <select id="filterRole" class="form-select form-select-sm">
                 <option value="">Tutti i ruoli</option>
                 <option value="P">Portieri</option>
@@ -53,12 +53,20 @@ require __DIR__ . '/../partials/header.php';
                 <option value="A">Attaccanti</option>
               </select>
             </div>
-            <div class="col-6">
+            <div class="col-4">
               <select id="filterTeam" class="form-select form-select-sm">
                 <option value="">Tutte le squadre</option>
                 <?php foreach ($realTeams as $rt): ?>
                   <option value="<?= e($rt) ?>"><?= e($rt) ?></option>
                 <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="col-4">
+              <select id="filterSort" class="form-select form-select-sm">
+                <option value="name">Ordina: Nome</option>
+                <option value="role">Ordina: Ruolo</option>
+                <option value="quotation">Ordina: Quotazione</option>
+                <option value="fvm">Ordina: Fantamedia (FVM)</option>
               </select>
             </div>
           </div>
@@ -71,42 +79,8 @@ require __DIR__ . '/../partials/header.php';
       </div>
     </div>
 
-    <!-- CENTRO: giocatore selezionato -->
-    <div class="col-lg-4">
-      <div class="card">
-        <div class="card-header">🎯 Giocatore selezionato</div>
-        <div class="card-body text-center" id="selectedPlayerBox">
-          <p class="text-dim">Seleziona un giocatore dalla lista a sinistra.</p>
-        </div>
-        <div class="card-footer d-flex gap-2">
-          <button class="btn btn-outline-warning btn-sm flex-fill" id="btnCallPlayer">📣 Metti all'asta (su Display/Dashboard)</button>
-          <button class="btn btn-outline-secondary btn-sm" id="btnClearCurrent">Pulisci</button>
-        </div>
-      </div>
-
-      <div class="card mt-3">
-        <div class="card-header">💰 Assegna</div>
-        <div class="card-body">
-          <div class="mb-2">
-            <label class="form-label small">Squadra selezionata</label>
-            <div id="selectedTeamLabel" class="fw-bold">-- nessuna --</div>
-          </div>
-          <div class="mb-2">
-            <label class="form-label small">Offerta massima consentita</label>
-            <div id="maxBidLabel" class="fw-bold credit-positive">-</div>
-          </div>
-          <div class="input-group">
-            <input type="number" id="priceInput" class="form-control" placeholder="Prezzo" min="1">
-            <button class="btn btn-success" id="btnAssign">ASSEGNA</button>
-          </div>
-          <div class="form-text">Premi INVIO nel campo prezzo per confermare.</div>
-          <div id="assignError" class="alert alert-danger py-1 mt-2 d-none"></div>
-        </div>
-      </div>
-    </div>
-
     <!-- DESTRA: fantateam -->
-    <div class="col-lg-4">
+    <div class="col-lg-5">
       <div class="card">
         <div class="card-header">🏟️ Fantateam</div>
         <div class="card-body admin-live-col" id="teamsList">
@@ -124,6 +98,40 @@ require __DIR__ . '/../partials/header.php';
           <thead><tr><th>Ora</th><th>Giocatore</th><th>Ruolo</th><th>Squadra</th><th>Prezzo</th><th>Azioni</th></tr></thead>
           <tbody id="purchasesHistory"></tbody>
         </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modale assegnazione giocatore (aperta al click su un risultato di ricerca) -->
+<div class="modal fade" id="assignModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Assegna giocatore</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3" id="assignPlayerInfo"></div>
+        <div class="mb-2">
+          <label class="form-label small">Squadra assegnataria</label>
+          <select id="assignTeamId" class="form-select"></select>
+        </div>
+        <div class="mb-2">
+          <label class="form-label small">Offerta massima consentita per la squadra selezionata</label>
+          <div id="assignMaxBidLabel" class="fw-bold credit-positive">-</div>
+        </div>
+        <div class="mb-2">
+          <label class="form-label small">Prezzo</label>
+          <input type="number" id="assignPriceInput" class="form-control form-control-lg" placeholder="Prezzo" min="1">
+          <div class="form-text">Premi INVIO per confermare.</div>
+        </div>
+        <div id="assignError" class="alert alert-danger py-1 d-none"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-warning me-auto" id="btnCallPlayerFromModal">📣 Metti all'asta</button>
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+        <button class="btn btn-success" id="btnAssign">ASSEGNA</button>
       </div>
     </div>
   </div>

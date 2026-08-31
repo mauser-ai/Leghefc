@@ -36,6 +36,7 @@ if ($auction === null && !empty($auctions)) {
 $otherTeams = $auction !== null ? TeamService::getAuctionTeams((int)$auction['id']) : [];
 $remainingBudget = $auction !== null ? AuctionService::getRemainingBudget($auction, $teamId) : null;
 $isLive = $auction !== null && $auction['status'] === Schema::STATUS_LIVE;
+$realTeams = $isLive ? PlayerService::realTeams() : [];
 
 $pageTitle = 'Dashboard - Fantacalcio Asta';
 $showNav = true;
@@ -128,6 +129,41 @@ require __DIR__ . '/partials/header.php';
     </div>
 
     <?php if ($isLive): ?>
+    <div class="card mt-3" id="buyPlayerCard">
+      <div class="card-header">🛒 Compra un giocatore <span class="text-dim fw-normal small">— tocca per dichiarare l'acquisto</span></div>
+      <div class="card-body">
+        <input type="text" id="buySearchQuery" class="form-control mb-2" placeholder="Cerca per nome...">
+        <div class="row g-2 mb-2">
+          <div class="col-4">
+            <select id="buyFilterRole" class="form-select form-select-sm">
+              <option value="">Tutti i ruoli</option>
+              <option value="P">Portieri</option>
+              <option value="D">Difensori</option>
+              <option value="C">Centrocampisti</option>
+              <option value="A">Attaccanti</option>
+            </select>
+          </div>
+          <div class="col-4">
+            <select id="buyFilterTeam" class="form-select form-select-sm">
+              <option value="">Tutte le squadre</option>
+              <?php foreach ($realTeams as $rt): ?>
+                <option value="<?= e($rt) ?>"><?= e($rt) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="col-4">
+            <select id="buyFilterSort" class="form-select form-select-sm">
+              <option value="name">Ordina: Nome</option>
+              <option value="role">Ordina: Ruolo</option>
+              <option value="quotation">Ordina: Quotazione</option>
+              <option value="fvm">Ordina: Fantamedia</option>
+            </select>
+          </div>
+        </div>
+        <div id="buyPlayerResults" style="max-height:340px; overflow-y:auto;"></div>
+      </div>
+    </div>
+
     <div class="card mt-3" id="liveRosterCard">
       <div class="card-header d-flex justify-content-between align-items-center">
         <span>📋 La tua rosa</span>
@@ -150,6 +186,30 @@ require __DIR__ . '/partials/header.php';
 </div>
 
 <?php if ($isLive): ?>
+<!-- Modale conferma acquisto (autodichiarazione dal partecipante) -->
+<div class="modal fade" id="buyModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Conferma acquisto</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-3" id="buyPlayerInfo"></div>
+        <div class="mb-2">
+          <label class="form-label small">Prezzo pagato</label>
+          <input type="number" id="buyPriceInput" class="form-control form-control-lg" placeholder="Prezzo" min="1">
+          <div class="form-text">Premi INVIO per confermare.</div>
+        </div>
+        <div id="buyError" class="alert alert-danger py-1 d-none"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+        <button class="btn btn-success" id="btnConfirmBuy">HO PRESO QUESTO GIOCATORE</button>
+      </div>
+    </div>
+  </div>
+</div>
 <script>
   window.FA_AUCTION_ID = <?= (int)$auction['id'] ?>;
   window.FA_TEAM_ID = <?= $teamId ?>;

@@ -5,10 +5,11 @@
   const ROLE_LABELS = { P: 'Portiere', D: 'Difensore', C: 'Centrocampista', A: 'Attaccante' };
   const POLL_MS = 1500;
 
-  let selectedPlayer = null;
-  let selectedTeamId = null;
   let latestTeams = [];
+  let currentPlayerId = null;
+  let assignPlayer = null; // giocatore attualmente mostrato nel popup di assegnazione
   let searchDebounce = null;
+  let assignModal = null;
 
   const el = (id) => document.getElementById(id);
 
@@ -33,9 +34,10 @@
     const q = el('searchQuery').value;
     const role = el('filterRole').value;
     const team = el('filterTeam').value;
+    const sort = el('filterSort').value;
     const available = el('filterAvailable').checked ? '1' : '0';
 
-    const params = new URLSearchParams({ auction: AUCTION_ID, q, role, team, available });
+    const params = new URLSearchParams({ auction: AUCTION_ID, q, role, team, sort, available });
     fetch(BASE + '/api/players.php?' + params.toString(), { credentials: 'same-origin' })
       .then(r => r.json())
       .then(data => {
@@ -46,26 +48,38 @@
           return;
         }
         box.innerHTML = data.players.map(p => `
-          <div class="player-search-item ${p.available ? '' : 'unavailable'} ${selectedPlayer && selectedPlayer.id === p.id ? 'selected' : ''}" data-id="${p.id}">
-            <div class="d-flex justify-content-between">
-              <span><span class="badge badge-role-${p.role} me-1">${p.role}</span>${escapeHtml(p.name)}</span>
-              <span class="text-dim small">${escapeHtml(p.real_team)}</span>
+          <div class="player-search-item ${p.available ? '' : 'unavailable'} ${currentPlayerId === p.id ? 'selected' : ''}" data-id="${p.id}">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="flex-grow-1">
+                <div><span class="badge badge-role-${p.role} me-1">${p.role}</span>${escapeHtml(p.name)} ${currentPlayerId === p.id ? '<span class="badge bg-danger ms-1">IN ASTA</span>' : ''}</div>
+                <div class="text-dim small">${escapeHtml(p.real_team)} &middot; Quot. ${escapeHtml(p.quotation)} &middot; FVM ${escapeHtml(p.fvm)} ${p.available ? '' : ' &middot; GIÀ ACQUISTATO'}</div>
+              </div>
+              <button type="button" class="btn btn-sm btn-outline-warning btn-call-player" data-id="${p.id}" title="Metti all'asta">📣</button>
             </div>
-            <div class="text-dim small">Quot. ${escapeHtml(p.quotation)} · FVM ${escapeHtml(p.fvm)} ${p.available ? '' : ' · GIA\' ACQUISTATO'}</div>
           </div>`).join('');
 
         box.querySelectorAll('.player-search-item').forEach(item => {
-          item.addEventListener('click', () => {
-            const player = data.players.find(p => String(p.id) === item.dataset.id);
-            selectPlayer(player);
+          const player = data.players.find(p => String(p.id) === item.dataset.id);
+          item.querySelector('.flex-grow-1').addEventListener('click', () => openAssignModal(player));
+          item.querySelector('.btn-call-player').addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            callPlayer(player.id);
           });
         });
       });
   }
 
-  function selectPlayer(player) {
-    selectedPlayer = player;
-    el('selectedPlayerBox').innerHTML = `
+  // ---------------- Popup assegnazione ----------------
+
+  function openAssignModal(player) {
+    if (!window.FA_AUCTION_LIVE) {
+      alert("L'asta non è in stato LIVE: gli acquisti sono disabilitati.");
+      return;
+    }
+    assignPlayer = player;
+    el('assignError').classList.add('d-none');
+
+    el('assignPlayerInfo').innerHTML = `
       <div class="fs-3 fw-bold">${escapeHtml(player.name)}</div>
       <div class="text-dim mb-2">${escapeHtml(player.real_team)} &middot; ${ROLE_LABELS[player.role] || player.role}</div>
       <div class="d-flex justify-content-center gap-4">
@@ -74,9 +88,90 @@
       </div>
       ${!player.available ? '<div class="alert alert-warning py-1 mt-2 mb-0">Giocatore già assegnato</div>' : ''}
     `;
-    updateMaxBidLabel();
-    doSearch();
+
+    const select = el('assignTeamId');
+    select.innerHTML = latestTeams.map(t =>
+      `<option value="${t.team_id}">${escapeHtml(t.name)} — residuo ${t.remaining_budget}, max ${t.max_bid}</option>`
+    ).join('');
+    updateAssignMaxBidLabel();
+
+    el('assignPriceInput').value = '';
+
+    if (!assignModal) {
+      assignModal = new bootstrap.Modal(el('assignModal'));
+    }
+    assignModal.show();
+    setTimeout(() => el('assignPriceInput').focus(), 300);
   }
+
+  function updateAssignMaxBidLabel() {
+    const teamId = parseInt(el('assignTeamId').value, 10);
+    const team = latestTeams.find(t => t.team_id === teamId);
+    el('assignMaxBidLabel').textContent = team ? team.max_bid + ' crediti' : '-';
+  }
+
+  el('assignTeamId').addEventListener('change', updateAssignMaxBidLabel);
+
+  function doAssign() {
+    el('assignError').classList.add('d-none');
+    if (!assignPlayer) {
+      return;
+    }
+    const teamId = parseInt(el('assignTeamId').value, 10);
+    if (!teamId) {
+      showAssignError('Seleziona una squadra.');
+      return;
+    }
+    const price = parseInt(el('assignPriceInput').value, 10);
+    if (!price || price < 1) {
+      showAssignError('Inserisci un prezzo valido (>= 1).');
+      return;
+    }
+
+    jsonPost('/api/buy.php', { auction_id: AUCTION_ID, player_id: assignPlayer.id, team_id: teamId, price })
+      .then(res => {
+        if (res.success) {
+          assignModal.hide();
+          assignPlayer = null;
+          doSearch();
+          refreshState();
+        } else {
+          showAssignError(res.error || 'Errore sconosciuto.');
+        }
+      });
+  }
+
+  function showAssignError(msg) {
+    const box = el('assignError');
+    box.textContent = msg;
+    box.classList.remove('d-none');
+  }
+
+  el('btnAssign').addEventListener('click', doAssign);
+  el('assignPriceInput').addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter') {
+      ev.preventDefault();
+      doAssign();
+    }
+  });
+
+  function callPlayer(playerId) {
+    jsonPost('/api/current_player.php', { auction_id: AUCTION_ID, player_id: playerId })
+      .then(res => {
+        if (res.success) {
+          refreshState();
+          doSearch();
+        } else {
+          alert(res.error || 'Errore');
+        }
+      });
+  }
+
+  el('btnCallPlayerFromModal').addEventListener('click', () => {
+    if (assignPlayer) {
+      callPlayer(assignPlayer.id);
+    }
+  });
 
   // ---------------- Squadre / stato asta ----------------
 
@@ -84,7 +179,7 @@
     latestTeams = teams;
     const box = el('teamsList');
     box.innerHTML = teams.map(t => `
-      <div class="card team-pick-card mb-2 ${selectedTeamId === t.team_id ? 'selected' : ''}" data-team="${t.team_id}">
+      <div class="card mb-2">
         <div class="card-body py-2">
           <div class="d-flex justify-content-between">
             <strong>${escapeHtml(t.name)}</strong>
@@ -97,32 +192,6 @@
           </div>
         </div>
       </div>`).join('');
-
-    box.querySelectorAll('.team-pick-card').forEach(card => {
-      card.addEventListener('click', () => {
-        selectedTeamId = parseInt(card.dataset.team, 10);
-        const team = teams.find(t => t.team_id === selectedTeamId);
-        el('selectedTeamLabel').textContent = team ? team.name : '-- nessuna --';
-        renderTeams(teams);
-        updateMaxBidLabel();
-      });
-    });
-  }
-
-  function updateMaxBidLabel() {
-    if (selectedTeamId === null) {
-      el('maxBidLabel').textContent = '-';
-      return;
-    }
-    const team = latestTeams.find(t => t.team_id === selectedTeamId);
-    el('maxBidLabel').textContent = team ? team.max_bid + ' crediti' : '-';
-  }
-
-  function renderCurrentPlayerDisplay(currentPlayer) {
-    // Sincronizza il pannello centrale se un altro dispositivo ha impostato un giocatore.
-    if (currentPlayer && (!selectedPlayer || selectedPlayer.id !== currentPlayer.id)) {
-      // non forza la selezione locale per non interrompere una ricerca in corso
-    }
   }
 
   function renderHistory(teams) {
@@ -155,7 +224,7 @@
       btn.addEventListener('click', () => {
         if (!confirm('Svincolare questo giocatore?')) return;
         jsonPost('/api/release.php', { auction_id: AUCTION_ID, purchase_id: parseInt(btn.dataset.id, 10) })
-          .then(() => refreshState());
+          .then(() => { refreshState(); doSearch(); });
       });
     });
     tbody.querySelectorAll('.btn-edit').forEach(btn => {
@@ -188,72 +257,9 @@
       });
   });
 
-  // ---------------- Assegnazione ----------------
-
-  function doAssign() {
-    el('assignError').classList.add('d-none');
-    if (!window.FA_AUCTION_LIVE) {
-      showAssignError("L'asta non è in stato LIVE.");
-      return;
-    }
-    if (!selectedPlayer) {
-      showAssignError('Seleziona prima un giocatore.');
-      return;
-    }
-    if (selectedTeamId === null) {
-      showAssignError('Seleziona una squadra.');
-      return;
-    }
-    const price = parseInt(el('priceInput').value, 10);
-    if (!price || price < 1) {
-      showAssignError('Inserisci un prezzo valido (>= 1).');
-      return;
-    }
-
-    jsonPost('/api/buy.php', { auction_id: AUCTION_ID, player_id: selectedPlayer.id, team_id: selectedTeamId, price })
-      .then(res => {
-        if (res.success) {
-          selectedPlayer = null;
-          el('selectedPlayerBox').innerHTML = '<p class="text-dim">Seleziona un giocatore dalla lista a sinistra.</p>';
-          el('priceInput').value = '';
-          doSearch();
-          refreshState();
-        } else {
-          showAssignError(res.error || 'Errore sconosciuto.');
-        }
-      });
-  }
-
-  function showAssignError(msg) {
-    const box = el('assignError');
-    box.textContent = msg;
-    box.classList.remove('d-none');
-  }
-
-  el('btnAssign').addEventListener('click', doAssign);
-  el('priceInput').addEventListener('keydown', (ev) => {
-    if (ev.key === 'Enter') {
-      ev.preventDefault();
-      doAssign();
-    }
-  });
-
   el('btnUndoLast').addEventListener('click', () => {
     if (!confirm('Annullare l\'ultima operazione registrata?')) return;
-    jsonPost('/api/undo.php', { auction_id: AUCTION_ID }).then(() => refreshState());
-  });
-
-  el('btnCallPlayer').addEventListener('click', () => {
-    if (!selectedPlayer) {
-      showAssignError('Seleziona prima un giocatore.');
-      return;
-    }
-    jsonPost('/api/current_player.php', { auction_id: AUCTION_ID, player_id: selectedPlayer.id })
-      .then(res => { if (!res.success) showAssignError(res.error || 'Errore'); });
-  });
-
-  el('btnClearCurrent').addEventListener('click', () => {
-    jsonPost('/api/current_player.php', { auction_id: AUCTION_ID, player_id: '' });
+    jsonPost('/api/undo.php', { auction_id: AUCTION_ID }).then(() => { refreshState(); doSearch(); });
   });
 
   ['searchQuery'].forEach(id => {
@@ -262,7 +268,7 @@
       searchDebounce = setTimeout(doSearch, 250);
     });
   });
-  ['filterRole', 'filterTeam', 'filterAvailable'].forEach(id => {
+  ['filterRole', 'filterTeam', 'filterSort', 'filterAvailable'].forEach(id => {
     el(id).addEventListener('change', doSearch);
   });
 
@@ -277,7 +283,12 @@
         el('auctionStatusBadge').className = 'badge status-badge-' + data.auction.status;
         renderTeams(data.teams);
         renderHistory(data.teams);
-        renderCurrentPlayerDisplay(data.current_player);
+
+        const newCurrentPlayerId = data.current_player ? data.current_player.id : null;
+        if (newCurrentPlayerId !== currentPlayerId) {
+          currentPlayerId = newCurrentPlayerId;
+          doSearch(); // aggiorna l'evidenziazione "IN ASTA" nella lista
+        }
       });
   }
 
