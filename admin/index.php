@@ -55,7 +55,7 @@ require __DIR__ . '/../partials/header.php';
         <div class="card-body">
           <h5>👥 Utenti</h5>
           <p class="text-dim">Gestisci account, attivazione e associazioni squadra/asta.</p>
-          <a href="/admin/users.php" class="btn btn-primary btn-sm">Gestisci utenti</a>
+          <a href="<?= url('/admin/users.php') ?>" class="btn btn-primary btn-sm">Gestisci utenti</a>
         </div>
       </div>
     </div>
@@ -64,7 +64,7 @@ require __DIR__ . '/../partials/header.php';
         <div class="card-body">
           <h5>🏆 Aste</h5>
           <p class="text-dim">Crea nuove aste, configura budget e limiti rosa, gestisci lo stato.</p>
-          <a href="/admin/auctions.php" class="btn btn-primary btn-sm">Gestisci aste</a>
+          <a href="<?= url('/admin/auctions.php') ?>" class="btn btn-primary btn-sm">Gestisci aste</a>
         </div>
       </div>
     </div>
@@ -73,7 +73,7 @@ require __DIR__ . '/../partials/header.php';
         <div class="card-body">
           <h5>📥 Listone</h5>
           <p class="text-dim">Importa il listone giocatori da CSV/XLSX con mappatura colonne.</p>
-          <a href="/import.php" class="btn btn-outline-primary btn-sm">Importa giocatori</a>
+          <a href="<?= url('/import.php') ?>" class="btn btn-outline-primary btn-sm">Importa giocatori</a>
         </div>
       </div>
     </div>

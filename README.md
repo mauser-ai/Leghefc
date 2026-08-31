@@ -33,8 +33,12 @@ database** (MySQL/PostgreSQL/SQLite) è utilizzato.
    ```bash
    chmod -R 775 data
    ```
-3. Punta il document root del sito alla root del progetto (dove si trova
-   `index.php`).
+3. Nessuna configurazione di percorso è necessaria: l'app **rileva da sola**
+   se è installata in radice (`https://tuosito.it/`) o in una sottocartella
+   (`https://tuosito.it/fanta/`), confrontando la cartella di `config.php` con
+   la document root del sito, e adatta di conseguenza tutti i link, i redirect
+   e le chiamate AJAX. Basta caricare i file dove preferisci (anche dentro una
+   sottocartella come `/fanta/`) e funziona senza modifiche.
 4. Installa le dipendenze PHP con Composer (necessario per import/export XLSX,
    incluso il template "Quotazioni Fantacalcio" usato in questo progetto):
    ```bash

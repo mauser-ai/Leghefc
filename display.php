@@ -41,5 +41,5 @@ require __DIR__ . '/partials/header.php';
 <div class="row g-3" id="teamsGrid"></div>
 
 <script>window.FA_AUCTION_ID = <?= $auctionId ?>;</script>
-<script src="/assets/js/display.js"></script>
+<script src="<?= url('/assets/js/display.js') ?>"></script>
 <?php require __DIR__ . '/partials/footer.php'; ?>

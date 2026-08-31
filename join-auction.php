@@ -44,7 +44,7 @@ require __DIR__ . '/partials/header.php';
       <p class="mb-1"><strong>Partecipanti:</strong> <?= count(TeamService::getAuctionTeams((int)$joined['id'])) ?></p>
       <p class="mb-0"><strong>Stato:</strong> <span class="badge status-badge-<?= e($joined['status']) ?>"><?= e($joined['status']) ?></span></p>
     </div>
-    <a href="/dashboard.php" class="btn btn-primary">Vai alla dashboard</a>
+    <a href="<?= url('/dashboard.php') ?>" class="btn btn-primary">Vai alla dashboard</a>
   <?php else: ?>
     <div class="card">
       <div class="card-body">

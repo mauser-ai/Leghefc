@@ -93,7 +93,7 @@ require __DIR__ . '/partials/header.php';
 <div class="container py-4" style="max-width:900px;">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">📥 Import Listone Giocatori</h2>
-    <a href="/admin/index.php" class="btn btn-outline-secondary btn-sm">&larr; Admin</a>
+    <a href="<?= url('/admin/index.php') ?>" class="btn btn-outline-secondary btn-sm">&larr; Admin</a>
   </div>
 
   <?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?>
@@ -162,7 +162,7 @@ require __DIR__ . '/partials/header.php';
           </div>
 
           <button type="submit" class="btn btn-success">Conferma import</button>
-          <a href="/import.php" class="btn btn-outline-secondary">Annulla</a>
+          <a href="<?= url('/import.php') ?>" class="btn btn-outline-secondary">Annulla</a>
         </form>
       </div>
     </div>

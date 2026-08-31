@@ -48,7 +48,7 @@ require __DIR__ . '/../partials/header.php';
 <div class="container-fluid py-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">👥 Gestione Utenti</h2>
-    <a href="/admin/index.php" class="btn btn-outline-secondary btn-sm">&larr; Admin</a>
+    <a href="<?= url('/admin/index.php') ?>" class="btn btn-outline-secondary btn-sm">&larr; Admin</a>
   </div>
 
   <?php if ($message): ?><div class="alert alert-success"><?= e($message) ?></div><?php endif; ?>

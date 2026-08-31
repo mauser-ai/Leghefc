@@ -43,7 +43,7 @@ require __DIR__ . '/partials/header.php';
 ?>
 <div class="container-fluid py-3" style="max-width:900px;">
   <h3 class="mb-1">Ciao, <?= e(Auth::nickname()) ?> 👋</h3>
-  <p class="text-dim mb-4">La tua squadra: <strong><?= e($team['name']) ?></strong> <a href="/profile.php" class="small">(modifica)</a></p>
+  <p class="text-dim mb-4">La tua squadra: <strong><?= e($team['name']) ?></strong> <a href="<?= url('/profile.php') ?>" class="small">(modifica)</a></p>
 
   <?php if (count($auctions) > 1): ?>
     <form method="get" class="mb-3">
@@ -60,7 +60,7 @@ require __DIR__ . '/partials/header.php';
 
   <?php if ($auction === null): ?>
     <div class="alert alert-info">
-      Non sei ancora associato a nessuna asta. <a href="/join-auction.php">Inserisci un codice invito</a> per iniziare.
+      Non sei ancora associato a nessuna asta. <a href="<?= url('/join-auction.php') ?>">Inserisci un codice invito</a> per iniziare.
     </div>
   <?php else: ?>
 
@@ -154,6 +154,6 @@ require __DIR__ . '/partials/header.php';
   window.FA_AUCTION_ID = <?= (int)$auction['id'] ?>;
   window.FA_TEAM_ID = <?= $teamId ?>;
 </script>
-<script src="/assets/js/dashboard.js"></script>
+<script src="<?= url('/assets/js/dashboard.js') ?>"></script>
 <?php endif; ?>
 <?php require __DIR__ . '/partials/footer.php'; ?>

@@ -77,7 +77,7 @@ require __DIR__ . '/partials/header.php';
     <div class="card-body">
       <?php if (empty($auctionLinks)): ?>
         <p class="text-dim mb-2">Non sei ancora associato a nessuna asta.</p>
-        <a href="/join-auction.php" class="btn btn-primary btn-sm">Inserisci codice invito</a>
+        <a href="<?= url('/join-auction.php') ?>" class="btn btn-primary btn-sm">Inserisci codice invito</a>
       <?php else: ?>
         <ul class="list-group list-group-flush">
           <?php foreach ($auctionLinks as $link):
@@ -93,7 +93,7 @@ require __DIR__ . '/partials/header.php';
             </li>
           <?php endforeach; ?>
         </ul>
-        <a href="/join-auction.php" class="btn btn-outline-primary btn-sm mt-3">Entra in un'altra asta</a>
+        <a href="<?= url('/join-auction.php') ?>" class="btn btn-outline-primary btn-sm mt-3">Entra in un'altra asta</a>
       <?php endif; ?>
     </div>
   </div>

@@ -1,6 +1,7 @@
 /* Interfaccia admin per la gestione dell'asta in tempo reale. */
 (function () {
   const AUCTION_ID = window.FA_AUCTION_ID;
+  const BASE = window.FA_BASE_PATH || '';
   const ROLE_LABELS = { P: 'Portiere', D: 'Difensore', C: 'Centrocampista', A: 'Attaccante' };
   const POLL_MS = 1500;
 
@@ -17,8 +18,8 @@
     return div.innerHTML;
   }
 
-  function jsonPost(url, body) {
-    return fetch(url, {
+  function jsonPost(path, body) {
+    return fetch(BASE + path, {
       method: 'POST',
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
@@ -35,7 +36,7 @@
     const available = el('filterAvailable').checked ? '1' : '0';
 
     const params = new URLSearchParams({ auction: AUCTION_ID, q, role, team, available });
-    fetch('/api/players.php?' + params.toString(), { credentials: 'same-origin' })
+    fetch(BASE + '/api/players.php?' + params.toString(), { credentials: 'same-origin' })
       .then(r => r.json())
       .then(data => {
         if (!data.success) return;
@@ -268,7 +269,7 @@
   // ---------------- Polling stato asta ----------------
 
   function refreshState() {
-    fetch(`/api/state.php?auction=${AUCTION_ID}`, { credentials: 'same-origin' })
+    fetch(`${BASE}/api/state.php?auction=${AUCTION_ID}`, { credentials: 'same-origin' })
       .then(r => r.json())
       .then(data => {
         if (!data.success) return;

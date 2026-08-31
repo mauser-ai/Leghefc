@@ -26,9 +26,9 @@ require __DIR__ . '/../partials/header.php';
         Rosa <?= (int)$auction['goalkeepers'] ?>/<?= (int)$auction['defenders'] ?>/<?= (int)$auction['midfielders'] ?>/<?= (int)$auction['attackers'] ?></span>
     </div>
     <div class="d-flex gap-2">
-      <a href="/display.php?auction=<?= $auctionId ?>" target="_blank" class="btn btn-outline-info btn-sm">📺 Apri Display</a>
+      <a href="<?= url('/display.php') ?>?auction=<?= $auctionId ?>" target="_blank" class="btn btn-outline-info btn-sm">📺 Apri Display</a>
       <button class="btn btn-outline-danger btn-sm" id="btnUndoLast">↩️ Annulla ultima operazione</button>
-      <a href="/admin/auctions.php" class="btn btn-outline-secondary btn-sm">&larr; Aste</a>
+      <a href="<?= url('/admin/auctions.php') ?>" class="btn btn-outline-secondary btn-sm">&larr; Aste</a>
     </div>
   </div>
 
@@ -161,5 +161,5 @@ require __DIR__ . '/../partials/header.php';
   window.FA_AUCTION_ID = <?= $auctionId ?>;
   window.FA_AUCTION_LIVE = <?= $auction['status'] === Schema::STATUS_LIVE ? 'true' : 'false' ?>;
 </script>
-<script src="/assets/js/admin-auction.js"></script>
+<script src="<?= url('/assets/js/admin-auction.js') ?>"></script>
 <?php require __DIR__ . '/../partials/footer.php'; ?>

@@ -55,7 +55,7 @@ require __DIR__ . '/partials/header.php';
     </form>
 
     <p class="text-center mt-3 mb-0 text-dim">
-      Hai già un account? <a href="/login.php">Accedi</a>
+      Hai già un account? <a href="<?= url('/login.php') ?>">Accedi</a>
     </p>
   </div>
 </div>

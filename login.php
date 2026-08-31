@@ -53,7 +53,7 @@ require __DIR__ . '/partials/header.php';
     </form>
 
     <p class="text-center mt-3 mb-0 text-dim">
-      Non hai un account? <a href="/register.php">Registrati</a>
+      Non hai un account? <a href="<?= url('/register.php') ?>">Registrati</a>
     </p>
   </div>
 </div>

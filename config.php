@@ -13,6 +13,25 @@ define('DATA_DIR', APP_ROOT . '/data');
 define('BACKUP_DIR', DATA_DIR . '/backups');
 define('LOCK_DIR', DATA_DIR . '/locks');
 
+/**
+ * Percorso base dell'app rispetto alla root del dominio, dedotto automaticamente
+ * confrontando la cartella di questo file con la document root di Apache. Permette
+ * di installare l'app sia in radice (https://esempio.it/) sia in una sottocartella
+ * (https://esempio.it/fanta/) senza alcuna configurazione manuale: tutti i link,
+ * redirect e chiamate AJAX generati da url()/redirect() lo tengono automaticamente
+ * in conto.
+ */
+$computedBasePath = '';
+if (!empty($_SERVER['DOCUMENT_ROOT'])) {
+    $documentRoot = rtrim((string)(realpath($_SERVER['DOCUMENT_ROOT']) ?: $_SERVER['DOCUMENT_ROOT']), '/\\');
+    $appRoot = rtrim((string)(realpath(APP_ROOT) ?: APP_ROOT), '/\\');
+    if ($documentRoot !== '' && str_starts_with($appRoot, $documentRoot)) {
+        $computedBasePath = str_replace('\\', '/', substr($appRoot, strlen($documentRoot)));
+    }
+}
+define('BASE_PATH', $computedBasePath); // es. '' in radice, '/fanta' in sottocartella
+unset($computedBasePath, $documentRoot, $appRoot);
+
 // Numero massimo di snapshot di backup da conservare.
 define('BACKUP_MAX_SNAPSHOTS', 20);
 
@@ -40,11 +59,11 @@ spl_autoload_register(function (string $class): void {
 // va caricato esplicitamente perché l'autoload si attiva solo sull'uso della classe, non delle funzioni.
 require_once APP_ROOT . '/lib/Auth.php';
 
-// Sessioni PHP
+// Sessioni PHP (cookie limitato al percorso base dell'app, non a tutto il dominio)
 if (session_status() === PHP_SESSION_NONE) {
     session_set_cookie_params([
         'lifetime' => 0,
-        'path' => '/',
+        'path' => BASE_PATH !== '' ? BASE_PATH . '/' : '/',
         'httponly' => true,
         'samesite' => 'Lax',
     ]);
@@ -63,13 +82,27 @@ function e(?string $value): string
     return htmlspecialchars($value ?? '', ENT_QUOTES, 'UTF-8');
 }
 
+/**
+ * Antepone il percorso base dell'app (BASE_PATH) a un path assoluto interno
+ * (che inizia con '/'), così i link funzionano sia in radice che in una
+ * sottocartella. Un path relativo (senza '/' iniziale) o già esterno
+ * (http.../https...) viene restituito invariato.
+ */
+function url(string $path): string
+{
+    if ($path === '' || !str_starts_with($path, '/')) {
+        return $path;
+    }
+    return BASE_PATH . $path;
+}
+
 function redirect(string $path): never
 {
-    header('Location: ' . $path);
+    header('Location: ' . url($path));
     exit;
 }
 
 function baseUrl(): string
 {
-    return '';
+    return BASE_PATH;
 }

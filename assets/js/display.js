@@ -1,6 +1,7 @@
 /* Display generale TV/proiettore: aggiornamento AJAX ogni secondo. */
 (function () {
   const AUCTION_ID = window.FA_AUCTION_ID;
+  const BASE = window.FA_BASE_PATH || '';
   const ROLE_LABELS = { P: 'POR', D: 'DIF', C: 'CEN', A: 'ATT' };
   const POLL_MS = 1000;
 
@@ -50,7 +51,7 @@
   }
 
   function poll() {
-    fetch(`/api/state.php?auction=${AUCTION_ID}`, { credentials: 'same-origin' })
+    fetch(`${BASE}/api/state.php?auction=${AUCTION_ID}`, { credentials: 'same-origin' })
       .then(r => r.json())
       .then(data => { if (data.success) render(data); })
       .catch(() => {})

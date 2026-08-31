@@ -62,7 +62,7 @@ require __DIR__ . '/../partials/header.php';
 <div class="container-fluid py-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">🏆 Gestione Aste</h2>
-    <a href="/admin/index.php" class="btn btn-outline-secondary btn-sm">&larr; Admin</a>
+    <a href="<?= url('/admin/index.php') ?>" class="btn btn-outline-secondary btn-sm">&larr; Admin</a>
   </div>
 
   <?php if ($error): ?><div class="alert alert-danger"><?= e($error) ?></div><?php endif; ?>
@@ -129,14 +129,14 @@ require __DIR__ . '/../partials/header.php';
       <span><?= e($a['name']) ?> <span class="badge status-badge-<?= e($a['status']) ?> ms-2"><?= e($a['status']) ?></span></span>
       <div class="d-flex gap-2 flex-wrap">
         <?php if ($a['status'] === Schema::STATUS_LIVE): ?>
-          <a href="/admin/auction.php?id=<?= (int)$a['id'] ?>" class="btn btn-danger btn-sm pulse-live">🔴 Gestisci LIVE</a>
+          <a href="<?= url('/admin/auction.php') ?>?id=<?= (int)$a['id'] ?>" class="btn btn-danger btn-sm pulse-live">🔴 Gestisci LIVE</a>
         <?php elseif (in_array($a['status'], [Schema::STATUS_DRAFT, Schema::STATUS_OPEN], true)): ?>
-          <a href="/admin/auction.php?id=<?= (int)$a['id'] ?>" class="btn btn-outline-secondary btn-sm">Anteprima gestione</a>
+          <a href="<?= url('/admin/auction.php') ?>?id=<?= (int)$a['id'] ?>" class="btn btn-outline-secondary btn-sm">Anteprima gestione</a>
         <?php else: ?>
-          <a href="/admin/auction.php?id=<?= (int)$a['id'] ?>" class="btn btn-outline-secondary btn-sm">Vedi storico</a>
+          <a href="<?= url('/admin/auction.php') ?>?id=<?= (int)$a['id'] ?>" class="btn btn-outline-secondary btn-sm">Vedi storico</a>
         <?php endif; ?>
-        <a href="/display.php?auction=<?= (int)$a['id'] ?>" target="_blank" class="btn btn-outline-info btn-sm">📺 Display</a>
-        <a href="/export.php?auction=<?= (int)$a['id'] ?>" class="btn btn-outline-light btn-sm">⬇️ Export</a>
+        <a href="<?= url('/display.php') ?>?auction=<?= (int)$a['id'] ?>" target="_blank" class="btn btn-outline-info btn-sm">📺 Display</a>
+        <a href="<?= url('/export.php') ?>?auction=<?= (int)$a['id'] ?>" class="btn btn-outline-light btn-sm">⬇️ Export</a>
       </div>
     </div>
     <div class="card-body">

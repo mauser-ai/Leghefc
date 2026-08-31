@@ -2,6 +2,7 @@
 (function () {
   const AUCTION_ID = window.FA_AUCTION_ID;
   const TEAM_ID = window.FA_TEAM_ID;
+  const BASE = window.FA_BASE_PATH || '';
   const ROLE_LABELS = { P: 'POR', D: 'DIF', C: 'CEN', A: 'ATT' };
   const POLL_MS = 1500;
 
@@ -75,7 +76,7 @@
   }
 
   function poll() {
-    fetch(`/api/team_state.php?auction=${AUCTION_ID}&team=${TEAM_ID}`, { credentials: 'same-origin' })
+    fetch(`${BASE}/api/team_state.php?auction=${AUCTION_ID}&team=${TEAM_ID}`, { credentials: 'same-origin' })
       .then(r => r.json())
       .then(data => {
         if (data.success) {
