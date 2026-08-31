@@ -217,6 +217,7 @@ final class AuctionService
                 'role' => $player['role'] ?? '',
                 'quotation' => $player['quotation'] ?? '',
                 'fvm' => $player['fvm'] ?? '',
+                'external_id' => $player['external_id'] ?? '',
                 'price' => (int)$p['price'],
                 'timestamp' => $p['timestamp'],
             ];
@@ -270,6 +271,7 @@ final class AuctionService
             'purchase_id' => (int)$p['id'],
             'player_name' => $player['name'] ?? '???',
             'player_role' => $player['role'] ?? '',
+            'player_external_id' => $player['external_id'] ?? '',
             'team_name' => $team['name'] ?? '???',
             'team_id' => (int)$p['team_id'],
             'price' => (int)$p['price'],

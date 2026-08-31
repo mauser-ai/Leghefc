@@ -33,6 +33,7 @@ final class PlayerService
                 'role' => $p['role'],
                 'quotation' => $p['quotation'],
                 'fvm' => $p['fvm'],
+                'external_id' => $p['external_id'] ?? '',
             ];
         }
         CsvStorage::writeAll(Schema::PLAYERS, $rows, Schema::PLAYERS_HEADERS);

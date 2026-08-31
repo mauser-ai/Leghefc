@@ -19,6 +19,22 @@
     return div.innerHTML;
   }
 
+  function avatarUrl(externalId) {
+    return externalId ? `https://content.fantacalcio.it/web/campioncini/21/card/${externalId}.png` : null;
+  }
+
+  /* Card fantacalcio.it quando abbiamo l'id ufficiale, altrimenti pallino colorato per ruolo. */
+  function avatarHtml(player, sizeClass) {
+    const url = avatarUrl(player.external_id);
+    const role = player.role || '';
+    let html = `<div class="player-avatar-wrap ${sizeClass}"><div class="player-avatar-placeholder badge-role-${role}">${role}</div>`;
+    if (url) {
+      html += `<img src="${url}" alt="" onerror="this.style.display='none'">`;
+    }
+    html += `</div>`;
+    return html;
+  }
+
   function jsonPost(path, body) {
     return fetch(BASE + path, {
       method: 'POST',
@@ -50,9 +66,12 @@
         box.innerHTML = data.players.map(p => `
           <div class="player-search-item ${p.available ? '' : 'unavailable'} ${currentPlayerId === p.id ? 'selected' : ''}" data-id="${p.id}">
             <div class="d-flex justify-content-between align-items-start">
-              <div class="flex-grow-1">
-                <div><span class="badge badge-role-${p.role} me-1">${p.role}</span>${escapeHtml(p.name)} ${currentPlayerId === p.id ? '<span class="badge bg-danger ms-1">IN ASTA</span>' : ''}</div>
-                <div class="text-dim small">${escapeHtml(p.real_team)} &middot; Quot. ${escapeHtml(p.quotation)} &middot; FVM ${escapeHtml(p.fvm)} ${p.available ? '' : ' &middot; GIÀ ACQUISTATO'}</div>
+              <div class="d-flex align-items-center gap-2 flex-grow-1">
+                ${avatarHtml(p, 'player-avatar-sm')}
+                <div>
+                  <div><span class="badge badge-role-${p.role} me-1">${p.role}</span>${escapeHtml(p.name)} ${currentPlayerId === p.id ? '<span class="badge bg-danger ms-1">IN ASTA</span>' : ''}</div>
+                  <div class="text-dim small">${escapeHtml(p.real_team)} &middot; Quot. ${escapeHtml(p.quotation)} &middot; FVM ${escapeHtml(p.fvm)} ${p.available ? '' : ' &middot; GIÀ ACQUISTATO'}</div>
+                </div>
               </div>
               <button type="button" class="btn btn-sm btn-outline-warning btn-call-player" data-id="${p.id}" title="Metti all'asta">📣</button>
             </div>
@@ -80,6 +99,7 @@
     el('assignError').classList.add('d-none');
 
     el('assignPlayerInfo').innerHTML = `
+      <div class="d-flex justify-content-center mb-2">${avatarHtml(player, 'player-avatar-lg')}</div>
       <div class="fs-3 fw-bold">${escapeHtml(player.name)}</div>
       <div class="text-dim mb-2">${escapeHtml(player.real_team)} &middot; ${ROLE_LABELS[player.role] || player.role}</div>
       <div class="d-flex justify-content-center gap-4">
@@ -210,7 +230,7 @@
     tbody.innerHTML = allPurchases.map(p => `
       <tr>
         <td class="small text-dim">${escapeHtml(p.timestamp.split(' ')[1] || '')}</td>
-        <td>${escapeHtml(p.name)}</td>
+        <td><div class="d-flex align-items-center gap-2">${avatarHtml(p, 'player-avatar-sm')}${escapeHtml(p.name)}</div></td>
         <td><span class="badge badge-role-${p.role}">${p.role}</span></td>
         <td>${escapeHtml(p.team_name)}</td>
         <td class="fw-bold">${p.price}</td>

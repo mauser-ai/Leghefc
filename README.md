@@ -162,12 +162,20 @@ al giorno dell'asta man mano che le quotazioni cambiano. In dettaglio:
   foglio del file.
 - La riga di intestazione viene individuata automaticamente anche se sopra
   di essa c'è una riga titolo (come nel template ufficiale).
-- Colonne riconosciute e mappate automaticamente: `Nome` → nome, `Squadra` →
-  squadra reale, `R` → ruolo classico, `Qt.A` → quotazione, `FVM` → FVM.
-  Le colonne "Mantra" (`RM`, `Qt.A M`, `Qt.I M`, `FVM M`) e la quotazione
-  iniziale (`Qt.I`) **non** vengono mappate di default (l'app gestisce il
-  regime classico P/D/C/A, non il Mantra): puoi comunque selezionarle a mano
-  nello step di mappatura se ti servono per altri scopi.
+- Colonne riconosciute e mappate automaticamente: `Id` → id ufficiale
+  fantacalcio.it (usato per l'avatar del giocatore, vedi sotto), `Nome` →
+  nome, `Squadra` → squadra reale, `R` → ruolo classico, `Qt.A` → quotazione,
+  `FVM` → FVM. Le colonne "Mantra" (`RM`, `Qt.A M`, `Qt.I M`, `FVM M`) e la
+  quotazione iniziale (`Qt.I`) **non** vengono mappate di default (l'app
+  gestisce il regime classico P/D/C/A, non il Mantra): puoi comunque
+  selezionarle a mano nello step di mappatura se ti servono per altri scopi.
+- **Avatar giocatore**: quando il listone include la colonna `Id`, ogni
+  giocatore mostra automaticamente la sua card ufficiale
+  (`https://content.fantacalcio.it/web/campioncini/21/card/{id}.png`) nella
+  ricerca admin, nel popup di assegnazione, nella dashboard partecipante e sul
+  display. Se l'id manca o l'immagine non è disponibile, viene mostrato un
+  pallino colorato con la lettera del ruolo al suo posto — nessun errore
+  visibile.
 - **Reimportare il listone è sicuro solo prima che siano stati fatti acquisti**:
   ogni import riassegna da zero gli id interni dei giocatori. Se in
   un'asta esistono già acquisti attivi, l'app blocca l'import con un errore
@@ -272,7 +280,7 @@ Tutti i file vivono in `/data` e hanno sempre una riga di intestazione.
 | `teams.csv` | `id, user_id, name, coach_name, logo, created_at, updated_at, active` |
 | `auctions.csv` | `id, name, invite_code, status, auction_date, initial_budget, goalkeepers, defenders, midfielders, attackers, created_at, updated_at` |
 | `auction_teams.csv` | `id, auction_id, team_id, enabled, joined_at` |
-| `players.csv` | `id, name, real_team, role, quotation, fvm` (listone globale) |
+| `players.csv` | `id, name, real_team, role, quotation, fvm, external_id` (listone globale; `external_id` è l'id ufficiale fantacalcio.it, usato per l'avatar) |
 | `auction_players.csv` | `auction_id, player_id, available` (disponibilità **per asta**, non globale) |
 | `purchases.csv` | `id, auction_id, player_id, team_id, price, timestamp, active` (storico ufficiale; i crediti residui si calcolano sempre dinamicamente: `initial_budget - SUM(price WHERE active=1)`) |
 | `current_auction.csv` | `auction_id, player_id, updated_at` (giocatore attualmente chiamato, per asta) |

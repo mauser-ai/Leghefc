@@ -84,6 +84,42 @@ body {
 .badge-role-C { background-color: #22c55e !important; color: #111 !important; }
 .badge-role-A { background-color: #ef4444 !important; }
 
+/* Avatar giocatore (card fantacalcio.it quando disponibile, altrimenti pallino colorato per ruolo) */
+.player-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--fa-surface-alt);
+}
+.player-avatar-sm { width: 32px; height: 32px; }
+.player-avatar-md { width: 48px; height: 48px; }
+.player-avatar-lg { width: 88px; height: 88px; }
+.player-avatar-xl { width: 140px; height: 140px; }
+
+.player-avatar-wrap img {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+}
+.player-avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+}
+.player-avatar-sm .player-avatar-placeholder { font-size: .8rem; }
+.player-avatar-md .player-avatar-placeholder { font-size: 1.1rem; }
+.player-avatar-lg .player-avatar-placeholder { font-size: 1.8rem; }
+.player-avatar-xl .player-avatar-placeholder { font-size: 2.6rem; }
+
 .status-badge-DRAFT { background-color: #6b7280 !important; }
 .status-badge-OPEN { background-color: #3b82f6 !important; }
 .status-badge-LIVE { background-color: #ef4444 !important; }

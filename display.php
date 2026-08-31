@@ -24,16 +24,24 @@ require __DIR__ . '/partials/header.php';
   <div class="col-lg-8">
     <div class="display-current text-center" id="currentPlayerBlock">
       <div class="text-dim mb-1">GIOCATORE ATTUALMENTE ALL'ASTA</div>
-      <div class="player-name" id="dCurrentName">In attesa...</div>
-      <div class="player-meta" id="dCurrentMeta">&nbsp;</div>
+      <div class="d-flex align-items-center justify-content-center gap-3">
+        <div id="dCurrentAvatar"></div>
+        <div>
+          <div class="player-name" id="dCurrentName">In attesa...</div>
+          <div class="player-meta" id="dCurrentMeta">&nbsp;</div>
+        </div>
+      </div>
     </div>
   </div>
   <div class="col-lg-4">
-    <div class="display-last h-100 d-flex flex-column justify-content-center">
-      <div class="text-dim mb-1">ULTIMO ACQUISTO</div>
-      <div class="fs-4 fw-bold" id="dLastPlayer">-</div>
-      <div class="text-dim" id="dLastTeam">-</div>
-      <div class="credit-medium credit-positive" id="dLastPrice">-</div>
+    <div class="display-last h-100 d-flex align-items-center gap-3">
+      <div id="dLastAvatar"></div>
+      <div>
+        <div class="text-dim mb-1">ULTIMO ACQUISTO</div>
+        <div class="fs-4 fw-bold" id="dLastPlayer">-</div>
+        <div class="text-dim" id="dLastTeam">-</div>
+        <div class="credit-medium credit-positive" id="dLastPrice">-</div>
+      </div>
     </div>
   </div>
 </div>

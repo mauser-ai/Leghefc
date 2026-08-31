@@ -10,6 +10,22 @@
     return (n === null || n === undefined) ? '-' : n;
   }
 
+  function avatarUrl(externalId) {
+    return externalId ? `https://content.fantacalcio.it/web/campioncini/21/card/${externalId}.png` : null;
+  }
+
+  /* Card fantacalcio.it quando abbiamo l'id ufficiale, altrimenti pallino colorato per ruolo. */
+  function avatarHtml(player, sizeClass) {
+    const url = avatarUrl(player.external_id);
+    const role = player.role || '';
+    let html = `<div class="player-avatar-wrap ${sizeClass}"><div class="player-avatar-placeholder badge-role-${role}">${role}</div>`;
+    if (url) {
+      html += `<img src="${url}" alt="" onerror="this.style.display='none'">`;
+    }
+    html += `</div>`;
+    return html;
+  }
+
   function render(data) {
     const remainingEl = document.getElementById('remainingBudget');
     if (remainingEl) {
@@ -22,6 +38,7 @@
       if (data.current_player) {
         const p = data.current_player;
         cpBody.innerHTML = `
+          <div class="d-flex justify-content-center mb-2">${avatarHtml(p, 'player-avatar-lg')}</div>
           <div class="fs-3 fw-bold">${escapeHtml(p.name)}</div>
           <div class="text-dim mb-2">${escapeHtml(p.real_team)} · <span class="badge badge-role-${p.role}">${ROLE_LABELS[p.role] || p.role}</span></div>
           <div class="d-flex justify-content-center gap-4">
@@ -57,7 +74,7 @@
       } else {
         rosterList.innerHTML = data.roster.slice().reverse().map(r => `
           <div class="roster-row">
-            <span><span class="badge badge-role-${r.role} me-2">${ROLE_LABELS[r.role] || r.role}</span>${escapeHtml(r.name)} <span class="text-dim">(${escapeHtml(r.real_team)})</span></span>
+            <span class="d-flex align-items-center gap-2">${avatarHtml(r, 'player-avatar-sm')}<span class="badge badge-role-${r.role}">${ROLE_LABELS[r.role] || r.role}</span>${escapeHtml(r.name)} <span class="text-dim">(${escapeHtml(r.real_team)})</span></span>
             <span class="fw-bold">${r.price}</span>
           </div>`).join('');
       }
@@ -132,8 +149,13 @@
         }
         box.innerHTML = data.players.map(p => `
           <div class="player-search-item" data-id="${p.id}">
-            <div><span class="badge badge-role-${p.role} me-1">${p.role}</span>${escapeHtml(p.name)}</div>
-            <div class="text-dim small">${escapeHtml(p.real_team)} &middot; Quot. ${escapeHtml(p.quotation)} &middot; FVM ${escapeHtml(p.fvm)}</div>
+            <div class="d-flex align-items-center gap-2">
+              ${avatarHtml(p, 'player-avatar-sm')}
+              <div>
+                <div><span class="badge badge-role-${p.role} me-1">${p.role}</span>${escapeHtml(p.name)}</div>
+                <div class="text-dim small">${escapeHtml(p.real_team)} &middot; Quot. ${escapeHtml(p.quotation)} &middot; FVM ${escapeHtml(p.fvm)}</div>
+              </div>
+            </div>
           </div>`).join('');
 
         box.querySelectorAll('.player-search-item').forEach(item => {
@@ -149,6 +171,7 @@
     const maxBid = latestState ? latestState.max_bid : null;
     const remaining = latestState ? latestState.remaining_budget : null;
     el('buyPlayerInfo').innerHTML = `
+      <div class="d-flex justify-content-center mb-2">${avatarHtml(player, 'player-avatar-lg')}</div>
       <div class="fs-3 fw-bold">${escapeHtml(player.name)}</div>
       <div class="text-dim mb-2">${escapeHtml(player.real_team)} &middot; <span class="badge badge-role-${player.role}">${ROLE_LABELS[player.role] || player.role}</span></div>
       <div class="d-flex justify-content-center gap-4 mb-2">

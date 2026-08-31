@@ -11,19 +11,38 @@
     return div.innerHTML;
   }
 
+  function avatarUrl(externalId) {
+    return externalId ? `https://content.fantacalcio.it/web/campioncini/21/card/${externalId}.png` : null;
+  }
+
+  /* Card fantacalcio.it quando abbiamo l'id ufficiale, altrimenti pallino colorato per ruolo. */
+  function avatarHtml(externalId, role, sizeClass) {
+    const url = avatarUrl(externalId);
+    role = role || '';
+    let html = `<div class="player-avatar-wrap ${sizeClass}"><div class="player-avatar-placeholder badge-role-${role}">${role}</div>`;
+    if (url) {
+      html += `<img src="${url}" alt="" onerror="this.style.display='none'">`;
+    }
+    html += `</div>`;
+    return html;
+  }
+
   function render(data) {
     document.getElementById('displayStatus').textContent = data.auction.status;
     document.getElementById('displayStatus').className = 'badge status-badge-' + data.auction.status + ' fs-5';
 
     const nameEl = document.getElementById('dCurrentName');
     const metaEl = document.getElementById('dCurrentMeta');
+    const avatarEl = document.getElementById('dCurrentAvatar');
     if (data.current_player) {
       const p = data.current_player;
       nameEl.textContent = p.name;
       metaEl.innerHTML = `${escapeHtml(p.real_team)} &middot; <span class="badge badge-role-${p.role}">${ROLE_LABELS[p.role] || p.role}</span> &middot; Quot. ${escapeHtml(p.quotation)} &middot; FVM ${escapeHtml(p.fvm)}`;
+      avatarEl.innerHTML = avatarHtml(p.external_id, p.role, 'player-avatar-xl');
     } else {
       nameEl.textContent = 'In attesa...';
       metaEl.innerHTML = '&nbsp;';
+      avatarEl.innerHTML = '';
     }
 
     if (data.last_purchase) {
@@ -31,6 +50,7 @@
       document.getElementById('dLastPlayer').textContent = lp.player_name;
       document.getElementById('dLastTeam').textContent = lp.team_name;
       document.getElementById('dLastPrice').textContent = lp.price + ' crediti';
+      document.getElementById('dLastAvatar').innerHTML = avatarHtml(lp.player_external_id, lp.player_role, 'player-avatar-md');
     }
 
     const grid = document.getElementById('teamsGrid');

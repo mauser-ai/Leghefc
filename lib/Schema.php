@@ -24,7 +24,9 @@ final class Schema
     public const AUCTION_TEAMS_HEADERS = ['id', 'auction_id', 'team_id', 'enabled', 'joined_at'];
 
     public const PLAYERS = 'players.csv';
-    public const PLAYERS_HEADERS = ['id', 'name', 'real_team', 'role', 'quotation', 'fvm'];
+    // external_id: id ufficiale del giocatore su fantacalcio.it (colonna "Id" del
+    // template Quotazioni Fantacalcio), usato per costruire l'URL dell'avatar/card.
+    public const PLAYERS_HEADERS = ['id', 'name', 'real_team', 'role', 'quotation', 'fvm', 'external_id'];
 
     public const AUCTION_PLAYERS = 'auction_players.csv';
     public const AUCTION_PLAYERS_HEADERS = ['auction_id', 'player_id', 'available'];

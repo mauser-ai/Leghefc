@@ -9,7 +9,7 @@ declare(strict_types=1);
 final class ImportService
 {
     /** Colonne normalizzate richieste dal sistema. */
-    public const TARGET_FIELDS = ['name', 'real_team', 'role', 'quotation', 'fvm'];
+    public const TARGET_FIELDS = ['name', 'real_team', 'role', 'quotation', 'fvm', 'external_id'];
 
     /**
      * Suggerimenti automatici nome colonna sorgente -> campo normalizzato.
@@ -40,6 +40,7 @@ final class ImportService
         'quotazione' => 'quotation',
         'quotation' => 'quotation',
         'fvm' => 'fvm',
+        'id' => 'external_id', // id ufficiale fantacalcio.it, usato per l'avatar del giocatore
     ];
 
     /** Nomi foglio (case-insensitive) da preferire nei file XLSX multi-foglio. */
@@ -215,6 +216,7 @@ final class ImportService
                 'role' => self::normalizeRole((string)($row[$fieldToColumn['role'] ?? ''] ?? '')),
                 'quotation' => (string)(int)preg_replace('/[^0-9\-]/', '', (string)($row[$fieldToColumn['quotation'] ?? ''] ?? '0') ?: '0'),
                 'fvm' => (string)(int)preg_replace('/[^0-9\-]/', '', (string)($row[$fieldToColumn['fvm'] ?? ''] ?? '0') ?: '0'),
+                'external_id' => preg_replace('/[^0-9]/', '', (string)($row[$fieldToColumn['external_id'] ?? ''] ?? '')),
             ];
         }
 
