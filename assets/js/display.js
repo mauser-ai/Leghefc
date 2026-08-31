@@ -12,7 +12,7 @@
   }
 
   function avatarUrl(externalId) {
-    return externalId ? `https://content.fantacalcio.it/web/campioncini/21/card/${externalId}.png` : null;
+    return externalId ? `${BASE}/avatar.php?id=${externalId}` : null;
   }
 
   /* Card fantacalcio.it quando abbiamo l'id ufficiale, altrimenti pallino colorato per ruolo. */

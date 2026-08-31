@@ -173,9 +173,14 @@ al giorno dell'asta man mano che le quotazioni cambiano. In dettaglio:
   giocatore mostra automaticamente la sua card ufficiale
   (`https://content.fantacalcio.it/web/campioncini/21/card/{id}.png`) nella
   ricerca admin, nel popup di assegnazione, nella dashboard partecipante e sul
-  display. Se l'id manca o l'immagine non è disponibile, viene mostrato un
-  pallino colorato con la lettera del ruolo al suo posto — nessun errore
-  visibile.
+  display. fantacalcio.it protegge queste immagini dall'hotlinking diretto
+  (un `<img>` che le richiama da un altro dominio spesso non le carica), quindi
+  l'app le scarica lato server tramite `/avatar.php?id=...`, le mette in cache
+  in `data/avatar_cache/` (30 giorni) e le serve dal proprio dominio. Se l'id
+  manca o il download fallisce, viene mostrato un pallino colorato con la
+  lettera del ruolo al suo posto — nessun errore visibile. Richiede
+  l'estensione PHP `curl` (quasi sempre disponibile) o, in mancanza,
+  `allow_url_fopen` abilitato.
 - **Reimportare il listone è sicuro solo prima che siano stati fatti acquisti**:
   ogni import riassegna da zero gli id interni dei giocatori. Se in
   un'asta esistono già acquisti attivi, l'app blocca l'import con un errore

@@ -9,6 +9,8 @@
 !/data/locks/.gitkeep
 /data/tmp_import/*
 !/data/tmp_import/.gitkeep
+/data/avatar_cache/*
+!/data/avatar_cache/.gitkeep
 
 .DS_Store
 *.swp

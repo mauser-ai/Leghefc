@@ -12,6 +12,7 @@ define('APP_ROOT', __DIR__);
 define('DATA_DIR', APP_ROOT . '/data');
 define('BACKUP_DIR', DATA_DIR . '/backups');
 define('LOCK_DIR', DATA_DIR . '/locks');
+define('AVATAR_CACHE_DIR', DATA_DIR . '/avatar_cache');
 
 /**
  * Percorso base dell'app rispetto alla root del dominio, dedotto automaticamente
@@ -35,7 +36,7 @@ unset($computedBasePath, $documentRoot, $appRoot);
 // Numero massimo di snapshot di backup da conservare.
 define('BACKUP_MAX_SNAPSHOTS', 20);
 
-foreach ([DATA_DIR, BACKUP_DIR, LOCK_DIR] as $dir) {
+foreach ([DATA_DIR, BACKUP_DIR, LOCK_DIR, AVATAR_CACHE_DIR] as $dir) {
     if (!is_dir($dir)) {
         mkdir($dir, 0775, true);
     }
