@@ -15,7 +15,7 @@ database** (MySQL/PostgreSQL/SQLite) è utilizzato.
 - JavaScript vanilla + `fetch` (polling AJAX, nessun WebSocket)
 - Storage: CSV su filesystem, con locking per scritture atomiche
 - Sessioni PHP per l'autenticazione (`password_hash` / `password_verify`)
-- PhpSpreadsheet (opzionale, via Composer) solo per import/export XLSX
+- PhpSpreadsheet (via Composer) per import/export XLSX — vedi punto 4
 
 ## 1. Requisiti
 
@@ -35,11 +35,18 @@ database** (MySQL/PostgreSQL/SQLite) è utilizzato.
    ```
 3. Punta il document root del sito alla root del progetto (dove si trova
    `index.php`).
-4. (Opzionale, solo per import/export XLSX) installa PhpSpreadsheet:
+4. Installa le dipendenze PHP con Composer (necessario per import/export XLSX,
+   incluso il template "Quotazioni Fantacalcio" usato in questo progetto):
    ```bash
-   composer require phpoffice/phpspreadsheet
+   composer install
    ```
-   Senza questa libreria l'app funziona comunque al 100% usando CSV.
+   La cartella `vendor/` **non è versionata** nel repository (troppo pesante,
+   >100 MB): va generata a ogni deploy con `composer install`. Se il tuo
+   hosting non ha accesso SSH/composer, esegui `composer install` in locale e
+   carica l'intera cartella `vendor/` via FTP insieme al resto del progetto.
+   Senza questa cartella l'app funziona comunque al 100% usando **solo CSV**
+   (upload/export XLSX vengono disabilitati con un messaggio esplicito, senza
+   errori fatali).
 
 Le cartelle `/data`, `/lib`, `/partials` e `/scripts` includono un `.htaccess`
 che blocca l'accesso diretto via browser (i CSV contengono, tra l'altro, gli
@@ -52,11 +59,22 @@ non un problema dell'app): usalo solo per test locali, mai in produzione.
 
 ## 3. Dati demo (per testare subito)
 
-Il repository include già dati demo pronti all'uso (1 admin, 10 utenti con
-fantateam, 1 asta, 50 giocatori fittizi). Per rigenerarli da zero:
+Il repository include già dati pronti all'uso: 1 admin, 10 utenti con
+fantateam, 1 asta demo (`DEMO26`, stato `DRAFT`) e — visto che è già stato
+importato un listone reale (vedi punto 6.1) — **il listone reale delle
+quotazioni Fantacalcio 2026/27** (524 giocatori) al posto dei soliti
+giocatori fittizi. Per rigenerare utenti/team/asta da zero (senza toccare il
+listone):
 
 ```bash
 php scripts/seed_demo.php --force
+```
+
+Se invece vuoi tornare ai 50 giocatori fittizi originali (es. per test che
+non devono usare dati reali), aggiungi `--with-fake-players`:
+
+```bash
+php scripts/seed_demo.php --force --with-fake-players
 ```
 
 Credenziali demo:
@@ -67,9 +85,6 @@ Credenziali demo:
 | Utente | `user1`…`user10` | `demo123` |
 
 Codice invito dell'asta demo: **`DEMO26`**.
-
-> I 50 giocatori demo hanno nomi e squadre **completamente inventati**: nessun
-> dato reale di calciatori è incluso.
 
 ## 4. Creazione di un amministratore (senza usare i dati demo)
 
@@ -119,6 +134,32 @@ Registrazione (nickname + password)
    vista generale (leggibile da lontano, aggiornamento ogni secondo).
 7. A fine asta, porta lo stato a `COMPLETED` e poi `ARCHIVED`, quindi esporta
    le rose da `/export.php?auction=ID`.
+
+## 6.1 Import del listone: template "Quotazioni Fantacalcio"
+
+L'app riconosce nativamente il file XLSX "Quotazioni Fantacalcio" (quello
+scaricabile ad es. da fantacalcio.it), che verrà ricaricato più volte da qui
+al giorno dell'asta man mano che le quotazioni cambiano. In dettaglio:
+
+- Se il file ha più fogli, viene usato automaticamente il foglio **"Tutti"**
+  (elenco completo dei giocatori attualmente in rosa in Serie A); il foglio
+  **"Ceduti"** (giocatori ormai fuori rosa) e gli eventuali fogli per-ruolo
+  vengono ignorati. Se non esiste un foglio "Tutti", viene usato il primo
+  foglio del file.
+- La riga di intestazione viene individuata automaticamente anche se sopra
+  di essa c'è una riga titolo (come nel template ufficiale).
+- Colonne riconosciute e mappate automaticamente: `Nome` → nome, `Squadra` →
+  squadra reale, `R` → ruolo classico, `Qt.A` → quotazione, `FVM` → FVM.
+  Le colonne "Mantra" (`RM`, `Qt.A M`, `Qt.I M`, `FVM M`) e la quotazione
+  iniziale (`Qt.I`) **non** vengono mappate di default (l'app gestisce il
+  regime classico P/D/C/A, non il Mantra): puoi comunque selezionarle a mano
+  nello step di mappatura se ti servono per altri scopi.
+- **Reimportare il listone è sicuro solo prima che siano stati fatti acquisti**:
+  ogni import riassegna da zero gli id interni dei giocatori. Se in
+  un'asta esistono già acquisti attivi, l'app blocca l'import con un errore
+  esplicito (per non spezzare i riferimenti delle rose già acquistate) —
+  in quel caso completa/archivia quell'asta o creane una nuova prima di
+  ricaricare un listone aggiornato.
 
 ## 7. Ricerca e gestione giocatori live
 

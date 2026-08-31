@@ -159,6 +159,20 @@ final class AuctionService
         });
     }
 
+    /**
+     * True se esiste almeno un acquisto attivo in una qualsiasi asta (usato per
+     * bloccare reimport del listone che romperebbero i riferimenti già acquistati).
+     */
+    public static function hasAnyActivePurchase(): bool
+    {
+        foreach (CsvStorage::readAll(Schema::PURCHASES, Schema::PURCHASES_HEADERS) as $p) {
+            if ((int)$p['active'] === 1) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static function getRemainingBudget(array $auction, int $teamId): int
     {
         $spent = 0;

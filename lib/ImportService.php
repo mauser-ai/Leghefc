@@ -11,7 +11,18 @@ final class ImportService
     /** Colonne normalizzate richieste dal sistema. */
     public const TARGET_FIELDS = ['name', 'real_team', 'role', 'quotation', 'fvm'];
 
-    /** Suggerimenti automatici nome colonna sorgente -> campo normalizzato. */
+    /**
+     * Suggerimenti automatici nome colonna sorgente -> campo normalizzato.
+     *
+     * Tarati sul template "Quotazioni Fantacalcio" (fantacalcio.it), che è
+     * quello che verrà ricaricato periodicamente fino al giorno dell'asta:
+     * colonne Id, R, RM, Nome, Squadra, Qt.A, Qt.I, Diff., Qt.A M, Qt.I M,
+     * Diff.M, FVM, FVM M. Usiamo solo le colonne "classiche" (R, Qt.A, FVM):
+     * "RM" è il ruolo Mantra (es. "Pc", "Ds;Dd") e le colonne "... M" sono i
+     * valori Mantra — mapparle per errore su ruolo/quotazione produrrebbe
+     * ruoli e prezzi sbagliati, quindi restano volutamente NON mappate di
+     * default (l'admin può comunque sceglierle a mano nello step di mapping).
+     */
     private const AUTO_MAP = [
         'nome' => 'name',
         'name' => 'name',
@@ -24,15 +35,18 @@ final class ImportService
         'r' => 'role',
         'ruolo' => 'role',
         'role' => 'role',
-        'rm' => 'role',
         'qt.a' => 'quotation',
         'qta' => 'quotation',
         'quotazione' => 'quotation',
         'quotation' => 'quotation',
-        'qt.i' => 'quotation',
         'fvm' => 'fvm',
-        'fvm m' => 'fvm',
     ];
+
+    /** Nomi foglio (case-insensitive) da preferire nei file XLSX multi-foglio. */
+    private const PREFERRED_SHEET_NAMES = ['tutti'];
+
+    /** Nomi foglio da escludere sempre (es. giocatori ormai fuori rosa Serie A). */
+    private const EXCLUDED_SHEET_NAMES = ['ceduti'];
 
     /**
      * Legge un file caricato (CSV o XLSX) e restituisce ['headers'=>[], 'rows'=>[][], 'suggested_map'=>[]].
@@ -75,27 +89,13 @@ final class ImportService
         rewind($fh);
         $delimiter = (substr_count($firstLine ?: '', ';') > substr_count($firstLine ?: '', ',')) ? ';' : ',';
 
-        $headers = fgetcsv($fh, 0, $delimiter, '"', '\\');
-        if ($headers === false) {
-            fclose($fh);
-            throw new RuntimeException('File CSV vuoto o non leggibile.');
-        }
-        $headers = array_map(fn($h) => trim((string)$h), $headers);
-
-        $rows = [];
+        $raw = [];
         while (($data = fgetcsv($fh, 0, $delimiter, '"', '\\')) !== false) {
-            if (count($data) === 1 && ($data[0] === null || $data[0] === '')) {
-                continue;
-            }
-            $row = [];
-            foreach ($headers as $i => $h) {
-                $row[$h] = $data[$i] ?? '';
-            }
-            $rows[] = $row;
+            $raw[] = $data;
         }
         fclose($fh);
 
-        return [$headers, $rows];
+        return self::extractHeaderAndRows($raw);
     }
 
     private static function readXlsx(string $path): array
@@ -114,18 +114,57 @@ final class ImportService
         }
 
         $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($path);
-        $sheet = $spreadsheet->getActiveSheet();
+        $sheet = self::pickSheet($spreadsheet);
         $data = $sheet->toArray(null, true, true, false);
 
         if (empty($data)) {
             throw new RuntimeException('File XLSX vuoto.');
         }
 
-        $headers = array_map(fn($h) => trim((string)$h), array_shift($data));
+        return self::extractHeaderAndRows($data);
+    }
+
+    /**
+     * Sceglie il foglio da importare in un file XLSX multi-foglio: preferisce
+     * un foglio con nome tra PREFERRED_SHEET_NAMES (es. "Tutti" nel template
+     * Quotazioni Fantacalcio), altrimenti usa il foglio attivo.
+     */
+    private static function pickSheet(\PhpOffice\PhpSpreadsheet\Spreadsheet $spreadsheet): \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet
+    {
+        foreach ($spreadsheet->getAllSheets() as $sheet) {
+            if (in_array(mb_strtolower(trim($sheet->getTitle())), self::PREFERRED_SHEET_NAMES, true)) {
+                return $sheet;
+            }
+        }
+        return $spreadsheet->getActiveSheet();
+    }
+
+    /**
+     * Individua la vera riga di intestazione tra le righe grezze lette dal
+     * file, saltando eventuali righe titolo (una sola cella valorizzata) o
+     * righe vuote iniziali, poi costruisce gli array associativi delle righe.
+     */
+    private static function extractHeaderAndRows(array $rawRows): array
+    {
+        $headerIndex = null;
+        foreach ($rawRows as $i => $line) {
+            $nonEmpty = array_filter($line, fn($v) => $v !== null && trim((string)$v) !== '');
+            if (count($nonEmpty) >= 2) {
+                $headerIndex = $i;
+                break;
+            }
+        }
+        if ($headerIndex === null) {
+            throw new RuntimeException('Impossibile individuare la riga di intestazione nel file.');
+        }
+
+        $headers = array_map(fn($h) => trim((string)$h), $rawRows[$headerIndex]);
+
         $rows = [];
-        foreach ($data as $line) {
-            if (empty(array_filter($line, fn($v) => $v !== null && $v !== ''))) {
-                continue;
+        foreach (array_slice($rawRows, $headerIndex + 1) as $line) {
+            $nonEmpty = array_filter($line, fn($v) => $v !== null && trim((string)$v) !== '');
+            if (empty($nonEmpty)) {
+                continue; // riga vuota
             }
             $row = [];
             foreach ($headers as $i => $h) {
@@ -188,6 +227,17 @@ final class ImportService
      */
     public static function importPlayers(array $players): int
     {
+        // L'import riassegna da zero gli id interni dei giocatori: se esistono già
+        // acquisti attivi, un reimport li lascerebbe puntare a giocatori sbagliati.
+        // Prima dell'asta (nessun acquisto registrato) i reimport ripetuti sono invece sicuri.
+        if (AuctionService::hasAnyActivePurchase()) {
+            throw new RuntimeException(
+                'Impossibile reimportare il listone: esistono già acquisti registrati in almeno un\'asta. ' .
+                'Un nuovo import riassegnerebbe gli identificativi dei giocatori e romperebbe le rose già acquistate. ' .
+                'Completa/archivia le aste con acquisti prima di reimportare, oppure crea una nuova asta.'
+            );
+        }
+
         BackupService::snapshot('before_import_listone');
         PlayerService::replaceAll($players);
 
