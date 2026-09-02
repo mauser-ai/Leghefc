@@ -214,6 +214,6 @@ require __DIR__ . '/partials/header.php';
   window.FA_AUCTION_ID = <?= (int)$auction['id'] ?>;
   window.FA_TEAM_ID = <?= $teamId ?>;
 </script>
-<script src="<?= url('/assets/js/dashboard.js') ?>"></script>
+<script src="<?= assetUrl('/assets/js/dashboard.js') ?>"></script>
 <?php endif; ?>
 <?php require __DIR__ . '/partials/footer.php'; ?>

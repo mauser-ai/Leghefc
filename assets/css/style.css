@@ -175,6 +175,27 @@ body {
   margin-right: .25rem;
 }
 
+.team-roster {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  border-top: 1px solid var(--fa-border);
+  padding-top: .6rem;
+}
+.team-roster-item {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  background: var(--fa-surface-alt);
+  border-radius: 2rem;
+  padding: .2rem .6rem .2rem .2rem;
+}
+.team-roster-name {
+  font-size: .85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 /* ---------------- Mobile dashboard ---------------- */
 .mobile-credit-strip {
   position: sticky;

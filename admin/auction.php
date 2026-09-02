@@ -129,7 +129,6 @@ require __DIR__ . '/../partials/header.php';
         <div id="assignError" class="alert alert-danger py-1 d-none"></div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-outline-warning me-auto" id="btnCallPlayerFromModal">📣 Metti all'asta</button>
         <button class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
         <button class="btn btn-success" id="btnAssign">ASSEGNA</button>
       </div>
@@ -169,5 +168,5 @@ require __DIR__ . '/../partials/header.php';
   window.FA_AUCTION_ID = <?= $auctionId ?>;
   window.FA_AUCTION_LIVE = <?= $auction['status'] === Schema::STATUS_LIVE ? 'true' : 'false' ?>;
 </script>
-<script src="<?= url('/assets/js/admin-auction.js') ?>"></script>
+<script src="<?= assetUrl('/assets/js/admin-auction.js') ?>"></script>
 <?php require __DIR__ . '/../partials/footer.php'; ?>

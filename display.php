@@ -20,34 +20,19 @@ require __DIR__ . '/partials/header.php';
   <span class="badge status-badge-<?= e($auction['status']) ?> fs-5" id="displayStatus"><?= e($auction['status']) ?></span>
 </div>
 
-<div class="row g-3 mb-3">
-  <div class="col-lg-8">
-    <div class="display-current text-center" id="currentPlayerBlock">
-      <div class="text-dim mb-1">GIOCATORE ATTUALMENTE ALL'ASTA</div>
-      <div class="d-flex align-items-center justify-content-center gap-3">
-        <div id="dCurrentAvatar"></div>
-        <div>
-          <div class="player-name" id="dCurrentName">In attesa...</div>
-          <div class="player-meta" id="dCurrentMeta">&nbsp;</div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="col-lg-4">
-    <div class="display-last h-100 d-flex align-items-center gap-3">
-      <div id="dLastAvatar"></div>
-      <div>
-        <div class="text-dim mb-1">ULTIMO ACQUISTO</div>
-        <div class="fs-4 fw-bold" id="dLastPlayer">-</div>
-        <div class="text-dim" id="dLastTeam">-</div>
-        <div class="credit-medium credit-positive" id="dLastPrice">-</div>
-      </div>
-    </div>
+<div class="display-last d-flex align-items-center gap-3 mb-3">
+  <div id="dLastAvatar"></div>
+  <div>
+    <div class="text-dim mb-1">ULTIMO ACQUISTO</div>
+    <span class="fs-4 fw-bold" id="dLastPlayer">-</span>
+    <span class="text-dim mx-2">&middot;</span>
+    <span class="fs-5" id="dLastTeam">-</span>
+    <span class="credit-medium credit-positive ms-3" id="dLastPrice">-</span>
   </div>
 </div>
 
 <div class="row g-3" id="teamsGrid"></div>
 
 <script>window.FA_AUCTION_ID = <?= $auctionId ?>;</script>
-<script src="<?= url('/assets/js/display.js') ?>"></script>
+<script src="<?= assetUrl('/assets/js/display.js') ?>"></script>
 <?php require __DIR__ . '/partials/footer.php'; ?>

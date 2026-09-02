@@ -6,7 +6,6 @@
   const POLL_MS = 1500;
 
   let latestTeams = [];
-  let currentPlayerId = null;
   let assignPlayer = null; // giocatore attualmente mostrato nel popup di assegnazione
   let searchDebounce = null;
   let assignModal = null;
@@ -64,26 +63,19 @@
           return;
         }
         box.innerHTML = data.players.map(p => `
-          <div class="player-search-item ${p.available ? '' : 'unavailable'} ${currentPlayerId === p.id ? 'selected' : ''}" data-id="${p.id}">
-            <div class="d-flex justify-content-between align-items-start">
-              <div class="d-flex align-items-center gap-2 flex-grow-1">
-                ${avatarHtml(p, 'player-avatar-sm')}
-                <div>
-                  <div><span class="badge badge-role-${p.role} me-1">${p.role}</span>${escapeHtml(p.name)} ${currentPlayerId === p.id ? '<span class="badge bg-danger ms-1">IN ASTA</span>' : ''}</div>
-                  <div class="text-dim small">${escapeHtml(p.real_team)} &middot; Quot. ${escapeHtml(p.quotation)} &middot; FVM ${escapeHtml(p.fvm)} ${p.available ? '' : ' &middot; GIÀ ACQUISTATO'}</div>
-                </div>
+          <div class="player-search-item ${p.available ? '' : 'unavailable'}" data-id="${p.id}">
+            <div class="d-flex align-items-center gap-2">
+              ${avatarHtml(p, 'player-avatar-sm')}
+              <div>
+                <div><span class="badge badge-role-${p.role} me-1">${p.role}</span>${escapeHtml(p.name)}</div>
+                <div class="text-dim small">${escapeHtml(p.real_team)} &middot; Quot. ${escapeHtml(p.quotation)} &middot; FVM ${escapeHtml(p.fvm)} ${p.available ? '' : ' &middot; GIÀ ACQUISTATO'}</div>
               </div>
-              <button type="button" class="btn btn-sm btn-outline-warning btn-call-player" data-id="${p.id}" title="Metti all'asta">📣</button>
             </div>
           </div>`).join('');
 
         box.querySelectorAll('.player-search-item').forEach(item => {
           const player = data.players.find(p => String(p.id) === item.dataset.id);
-          item.querySelector('.flex-grow-1').addEventListener('click', () => openAssignModal(player));
-          item.querySelector('.btn-call-player').addEventListener('click', (ev) => {
-            ev.stopPropagation();
-            callPlayer(player.id);
-          });
+          item.addEventListener('click', () => openAssignModal(player));
         });
       });
   }
@@ -172,24 +164,6 @@
     if (ev.key === 'Enter') {
       ev.preventDefault();
       doAssign();
-    }
-  });
-
-  function callPlayer(playerId) {
-    jsonPost('/api/current_player.php', { auction_id: AUCTION_ID, player_id: playerId })
-      .then(res => {
-        if (res.success) {
-          refreshState();
-          doSearch();
-        } else {
-          alert(res.error || 'Errore');
-        }
-      });
-  }
-
-  el('btnCallPlayerFromModal').addEventListener('click', () => {
-    if (assignPlayer) {
-      callPlayer(assignPlayer.id);
     }
   });
 
@@ -303,12 +277,6 @@
         el('auctionStatusBadge').className = 'badge status-badge-' + data.auction.status;
         renderTeams(data.teams);
         renderHistory(data.teams);
-
-        const newCurrentPlayerId = data.current_player ? data.current_player.id : null;
-        if (newCurrentPlayerId !== currentPlayerId) {
-          currentPlayerId = newCurrentPlayerId;
-          doSearch(); // aggiorna l'evidenziazione "IN ASTA" nella lista
-        }
       });
   }
 

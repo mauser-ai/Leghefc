@@ -103,6 +103,19 @@ function redirect(string $path): never
     exit;
 }
 
+/**
+ * Come url(), ma per gli asset statici (CSS/JS): aggiunge ?v=<data modifica
+ * del file> in coda, così ogni volta che un asset viene aggiornato sul
+ * server il browser (o qualunque cache intermedia) è costretto a scaricarne
+ * la versione nuova invece di servire quella vecchia dalla cache.
+ */
+function assetUrl(string $path): string
+{
+    $fullPath = APP_ROOT . $path;
+    $version = is_file($fullPath) ? (string)filemtime($fullPath) : (string)time();
+    return url($path) . '?v=' . $version;
+}
+
 function baseUrl(): string
 {
     return BASE_PATH;
