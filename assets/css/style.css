@@ -195,6 +195,12 @@ body {
   font-weight: 600;
   white-space: nowrap;
 }
+.team-roster-price {
+  font-size: .85rem;
+  font-weight: 800;
+  color: var(--fa-accent);
+  white-space: nowrap;
+}
 
 /* ---------------- Mobile dashboard ---------------- */
 .mobile-credit-strip {

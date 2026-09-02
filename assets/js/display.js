@@ -47,9 +47,10 @@
       const rosterHtml = roster.length === 0
         ? '<div class="text-dim small mt-2">Nessun giocatore ancora.</div>'
         : `<div class="team-roster mt-2">${roster.map(r => `
-            <div class="team-roster-item" title="${escapeHtml(r.name)} (${r.price})">
+            <div class="team-roster-item">
               ${avatarHtml(r.external_id, r.role, 'player-avatar-sm')}
               <span class="team-roster-name">${escapeHtml(r.name)}</span>
+              <span class="team-roster-price">${r.price}</span>
             </div>`).join('')}</div>`;
 
       return `
