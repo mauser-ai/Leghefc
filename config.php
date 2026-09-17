@@ -36,6 +36,10 @@ unset($computedBasePath, $documentRoot, $appRoot);
 // Numero massimo di snapshot di backup da conservare.
 define('BACKUP_MAX_SNAPSHOTS', 20);
 
+// Password di riserva per i partecipanti (non admin) che dimenticano la propria.
+// Compromesso scelto per una lega tra amici: comodità > sicurezza stretta.
+define('PASSWORD_FALLBACK', 'FANTA26');
+
 foreach ([DATA_DIR, BACKUP_DIR, LOCK_DIR, AVATAR_CACHE_DIR] as $dir) {
     if (!is_dir($dir)) {
         mkdir($dir, 0775, true);
