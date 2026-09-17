@@ -64,10 +64,19 @@ spl_autoload_register(function (string $class): void {
 // va caricato esplicitamente perché l'autoload si attiva solo sull'uso della classe, non delle funzioni.
 require_once APP_ROOT . '/lib/Auth.php';
 
-// Sessioni PHP (cookie limitato al percorso base dell'app, non a tutto il dominio)
+// Sessioni PHP (cookie limitato al percorso base dell'app, non a tutto il dominio).
+// Durata di almeno una settimana dal login: una lega tra amici non deve dover
+// rifare l'accesso ad ogni visita.
+define('SESSION_LIFETIME_SECONDS', 7 * 24 * 60 * 60);
+
 if (session_status() === PHP_SESSION_NONE) {
+    // Senza questo, il file di sessione lato server verrebbe comunque
+    // eliminato dal garbage collector di PHP dopo il gc_maxlifetime di
+    // default dell'host (spesso solo ~24 minuti), invalidando il cookie
+    // prima del previsto.
+    ini_set('session.gc_maxlifetime', (string)SESSION_LIFETIME_SECONDS);
     session_set_cookie_params([
-        'lifetime' => 0,
+        'lifetime' => SESSION_LIFETIME_SECONDS,
         'path' => BASE_PATH !== '' ? BASE_PATH . '/' : '/',
         'httponly' => true,
         'samesite' => 'Lax',

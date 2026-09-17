@@ -3,6 +3,7 @@
   const AUCTION_ID = window.FA_AUCTION_ID;
   const TEAM_ID = window.FA_TEAM_ID;
   const BASE = window.FA_BASE_PATH || '';
+  const INITIAL_LIVE = !!window.FA_AUCTION_LIVE;
   const ROLE_LABELS = { P: 'POR', D: 'DIF', C: 'CEN', A: 'ATT' };
   const ROLE_ORDER = { P: 0, D: 1, C: 2, A: 3 };
   const POLL_MS = 1500;
@@ -92,7 +93,11 @@
         if (data.success) {
           latestState = data;
           render(data);
-          if (data.auction_status !== 'LIVE') {
+          // Ricarica solo quando lo stato dell'asta cambia rispetto a quello con cui
+          // la pagina è stata renderizzata (es. l'admin porta l'asta in LIVE, o la
+          // chiude): un confronto contro una stringa fissa ricaricherebbe la pagina
+          // ad ogni poll quando l'asta non è LIVE, in loop.
+          if ((data.auction_status === 'LIVE') !== INITIAL_LIVE) {
             location.reload();
           }
         }
@@ -111,6 +116,11 @@
   function renderLeague(data) {
     const box = document.getElementById('leagueTeams');
     if (!box) return;
+
+    // Il rendering ricrea da zero tutto l'HTML ad ogni poll: senza questo,
+    // riaprire una rosa e aspettare un secondo la richiuderebbe da sola.
+    const expandedIds = Array.from(box.querySelectorAll('.collapse.show')).map(el => el.id);
+
     box.innerHTML = data.teams.map(t => {
       const roster = (t.roster || []).slice().sort((a, b) => (ROLE_ORDER[a.role] ?? 9) - (ROLE_ORDER[b.role] ?? 9) || a.name.localeCompare(b.name));
       const rosterHtml = roster.length === 0
@@ -145,6 +155,14 @@
         </div>
       </div>`;
     }).join('');
+
+    expandedIds.forEach(id => {
+      const collapseEl = document.getElementById(id);
+      if (!collapseEl) return;
+      collapseEl.classList.add('show');
+      const trigger = box.querySelector(`[data-bs-target="#${id}"]`);
+      if (trigger) trigger.setAttribute('aria-expanded', 'true');
+    });
   }
 
   function leaguePoll() {
