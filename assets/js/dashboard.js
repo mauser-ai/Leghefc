@@ -1,13 +1,16 @@
-/* Polling AJAX per la dashboard partecipante durante l'asta LIVE. */
+/* Dashboard partecipante: tab bar app-style + polling AJAX durante l'asta LIVE. */
 (function () {
   const AUCTION_ID = window.FA_AUCTION_ID;
   const TEAM_ID = window.FA_TEAM_ID;
   const BASE = window.FA_BASE_PATH || '';
   const ROLE_LABELS = { P: 'POR', D: 'DIF', C: 'CEN', A: 'ATT' };
+  const ROLE_ORDER = { P: 0, D: 1, C: 2, A: 3 };
   const POLL_MS = 1500;
 
-  function fmt(n) {
-    return (n === null || n === undefined) ? '-' : n;
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
   }
 
   function avatarUrl(externalId) {
@@ -26,6 +29,22 @@
     return html;
   }
 
+  // ---------------- Tab bar (La mia situazione / Asta in corso / Situazione lega) ----------------
+
+  const tabbar = document.querySelector('.app-tabbar');
+  if (tabbar) {
+    tabbar.querySelectorAll('.app-tabbar-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabbar.querySelectorAll('.app-tabbar-item').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-pane-mobile').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+      });
+    });
+  }
+
+  // ---------------- Tab: La mia situazione ----------------
+
   function render(data) {
     const remainingEl = document.getElementById('remainingBudget');
     if (remainingEl) {
@@ -33,30 +52,8 @@
       remainingEl.className = 'credit-medium ' + (data.remaining_budget < 0 ? 'credit-danger' : (data.remaining_budget < data.initial_budget * 0.15 ? 'credit-warn' : 'credit-positive'));
     }
 
-    const cpBody = document.getElementById('currentPlayerBody');
-    if (cpBody) {
-      if (data.current_player) {
-        const p = data.current_player;
-        cpBody.innerHTML = `
-          <div class="d-flex justify-content-center mb-2">${avatarHtml(p, 'player-avatar-lg')}</div>
-          <div class="fs-3 fw-bold">${escapeHtml(p.name)}</div>
-          <div class="text-dim mb-2">${escapeHtml(p.real_team)} · <span class="badge badge-role-${p.role}">${ROLE_LABELS[p.role] || p.role}</span></div>
-          <div class="d-flex justify-content-center gap-4">
-            <div><div class="text-dim small">Quotazione</div><div class="fw-bold">${escapeHtml(p.quotation)}</div></div>
-            <div><div class="text-dim small">FVM</div><div class="fw-bold">${escapeHtml(p.fvm)}</div></div>
-          </div>`;
-      } else {
-        cpBody.innerHTML = '<p class="text-dim mb-0">Nessun giocatore selezionato al momento.</p>';
-      }
-    }
-
     document.getElementById('statSpent').textContent = data.spent;
-    document.getElementById('statSlots').textContent = data.slots_free + ' / ' + data.slots_total;
     document.getElementById('statMax').textContent = data.max_bid;
-
-    const totalPlayers = data.players_count || 0;
-    const totalSpent = data.spent || 0;
-    document.getElementById('statAvg').textContent = totalPlayers > 0 ? Math.round(totalSpent / totalPlayers * 10) / 10 : '-';
 
     const roleCounters = document.getElementById('roleCounters');
     if (roleCounters) {
@@ -86,12 +83,6 @@
     }
   }
 
-  function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str == null ? '' : String(str);
-    return div.innerHTML;
-  }
-
   let latestState = null;
 
   function fetchState() {
@@ -115,7 +106,60 @@
 
   pollLoop();
 
-  // ---------------- Compra un giocatore (autodichiarazione) ----------------
+  // ---------------- Tab: Situazione lega ----------------
+
+  function renderLeague(data) {
+    const box = document.getElementById('leagueTeams');
+    if (!box) return;
+    box.innerHTML = data.teams.map(t => {
+      const roster = (t.roster || []).slice().sort((a, b) => (ROLE_ORDER[a.role] ?? 9) - (ROLE_ORDER[b.role] ?? 9) || a.name.localeCompare(b.name));
+      const rosterHtml = roster.length === 0
+        ? '<p class="text-dim small p-3 mb-0">Nessun giocatore ancora.</p>'
+        : roster.map(r => `
+            <div class="roster-row">
+              <span class="d-flex align-items-center gap-2">${avatarHtml(r, 'player-avatar-sm')}<span class="badge badge-role-${r.role}">${r.role}</span>${escapeHtml(r.name)}</span>
+              <span class="fw-bold">${r.price}</span>
+            </div>`).join('');
+      const collapseId = 'leagueRoster' + t.team_id;
+      const isMe = t.team_id === TEAM_ID;
+
+      return `
+      <div class="league-team-card ${isMe ? 'border-primary' : ''}">
+        <button class="league-team-header" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="false">
+          <div>
+            <div class="fw-bold">${escapeHtml(t.name)} ${isMe ? '<span class="badge bg-primary ms-1">Tu</span>' : ''}</div>
+            <div class="mt-1">
+              <span class="badge badge-role-P">P ${t.role_counts.P}/${t.role_limits.P}</span>
+              <span class="badge badge-role-D">D ${t.role_counts.D}/${t.role_limits.D}</span>
+              <span class="badge badge-role-C">C ${t.role_counts.C}/${t.role_limits.C}</span>
+              <span class="badge badge-role-A">A ${t.role_counts.A}/${t.role_limits.A}</span>
+            </div>
+          </div>
+          <div class="text-end flex-shrink-0">
+            <div class="credit-medium credit-positive">${t.remaining_budget}</div>
+            <i class="bi bi-chevron-down text-dim"></i>
+          </div>
+        </button>
+        <div class="collapse" id="${collapseId}">
+          <div class="league-team-roster">${rosterHtml}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function leaguePoll() {
+    fetch(`${BASE}/api/state.php?auction=${AUCTION_ID}`, { credentials: 'same-origin' })
+      .then(r => r.json())
+      .then(data => { if (data.success) renderLeague(data); })
+      .catch(() => {})
+      .finally(() => setTimeout(leaguePoll, POLL_MS));
+  }
+
+  if (document.getElementById('leagueTeams')) {
+    leaguePoll();
+  }
+
+  // ---------------- Tab: Asta in corso — compra un giocatore (autodichiarazione) ----------------
 
   const el = (id) => document.getElementById(id);
   let buyModal = null;

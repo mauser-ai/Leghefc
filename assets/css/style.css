@@ -17,6 +17,22 @@ body {
   color: #e7e9ee;
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   min-height: 100vh;
+  overscroll-behavior-y: contain;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button, a, .app-tabbar-item, .league-team-header, .player-search-item {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Evita lo zoom automatico di iOS quando si tocca un campo di input:
+   Safari mobile ingrandisce la pagina se un input ha font-size < 16px. */
+@media (hover: none) and (pointer: coarse) {
+  .form-control, .form-select, textarea,
+  .form-control-sm, .form-select-sm {
+    font-size: 16px !important;
+  }
 }
 
 .app-navbar {
@@ -202,13 +218,106 @@ body {
   white-space: nowrap;
 }
 
-/* ---------------- Mobile dashboard ---------------- */
-.mobile-credit-strip {
+/* ---------------- App shell mobile (dashboard partecipante) ---------------- */
+.app-shell {
+  padding: 0;
+}
+
+.app-topbar {
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   background: var(--fa-surface);
   border-bottom: 1px solid var(--fa-border);
+  padding: .7rem 1rem;
+  padding-top: calc(.7rem + env(safe-area-inset-top));
+}
+.app-topbar-menu-btn {
+  background: none;
+  border: none;
+  color: #e7e9ee;
+  font-size: 1.5rem;
+  line-height: 1;
+  padding: .25rem .5rem;
+}
+
+.offcanvas {
+  background-color: var(--fa-surface);
+  color: #e7e9ee;
+}
+
+.app-content-mobile {
+  padding-bottom: calc(76px + env(safe-area-inset-bottom));
+}
+
+.tab-pane-mobile {
+  display: none;
+}
+.tab-pane-mobile.active {
+  display: block;
+}
+
+.app-tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  display: flex;
+  background: var(--fa-surface);
+  border-top: 1px solid var(--fa-border);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.app-tabbar-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .15rem;
+  background: none;
+  border: none;
+  color: var(--fa-text-dim);
+  font-size: .7rem;
+  font-weight: 600;
+  padding: .5rem 0 .4rem;
+}
+.app-tabbar-item i {
+  font-size: 1.35rem;
+}
+.app-tabbar-item.active {
+  color: var(--fa-accent);
+}
+
+.league-team-card {
+  background: var(--fa-surface);
+  border: 1px solid var(--fa-border);
+  border-radius: .75rem;
+  overflow: hidden;
+}
+.league-team-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: .5rem;
+  background: none;
+  border: none;
+  color: #e7e9ee;
+  text-align: left;
+  padding: .75rem .9rem;
+}
+.league-team-header .bi-chevron-down {
+  transition: transform .2s ease;
+}
+.league-team-header[aria-expanded="true"] .bi-chevron-down {
+  transform: rotate(180deg);
+}
+.league-team-roster {
+  border-top: 1px solid var(--fa-border);
 }
 
 .roster-row {
