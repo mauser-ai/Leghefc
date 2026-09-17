@@ -1,20 +1,41 @@
-/* Fantacalcio Asta Manager - tema scuro condiviso */
+/* Fantacalcio Asta Manager - tema chiaro con palette brand */
 
 :root {
-  --fa-bg: #0f1116;
-  --fa-surface: #171a21;
-  --fa-surface-alt: #1f232c;
-  --fa-border: #2a2f3a;
-  --fa-accent: #22c55e;
-  --fa-accent-2: #3b82f6;
-  --fa-warn: #f59e0b;
-  --fa-danger: #ef4444;
-  --fa-text-dim: #9aa3b2;
+  /* Palette brand */
+  --fa-primary: #2864E8;       /* Primary Blue */
+  --fa-primary-deep: #073D8C;  /* Deep Blue */
+  --fa-cyan: #19A7E0;          /* Light / Cyan Blue */
+  --fa-purple: #32106B;        /* Fantacalcio Purple */
+  --fa-purple-deep: #29105E;
+  --fa-orange: #FF7043;        /* Accent Orange */
+
+  /* Ruoli semantici usati in tutto il resto del foglio di stile */
+  --fa-bg: #F4F6FA;
+  --fa-surface: #FFFFFF;
+  --fa-surface-alt: #EEF2FB;
+  --fa-border: #DDE3F0;
+  --fa-accent: var(--fa-primary);
+  --fa-accent-2: var(--fa-cyan);
+  --fa-warn: var(--fa-orange);
+  --fa-danger: #DC2626;
+  --fa-text: #1A1D29;
+  --fa-text-dim: #6B7280;
+
+  /* Retinta delle variabili Bootstrap (senza ricompilare il CSS) */
+  --bs-primary: var(--fa-primary);
+  --bs-primary-rgb: 40, 100, 232;
+  --bs-link-color: var(--fa-primary);
+  --bs-link-color-rgb: 40, 100, 232;
+  --bs-link-hover-color: var(--fa-primary-deep);
+  --bs-link-hover-color-rgb: 7, 61, 140;
+  --bs-body-bg: var(--fa-bg);
+  --bs-body-color: var(--fa-text);
+  --bs-border-color: var(--fa-border);
 }
 
 body {
   background-color: var(--fa-bg);
-  color: #e7e9ee;
+  color: var(--fa-text);
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   min-height: 100vh;
   overscroll-behavior-y: contain;
@@ -36,14 +57,25 @@ button, a, .app-tabbar-item, .league-team-header, .player-search-item {
 }
 
 .app-navbar {
-  background-color: var(--fa-surface);
-  border-bottom: 1px solid var(--fa-border);
+  background: linear-gradient(135deg, var(--fa-purple), var(--fa-purple-deep));
+  border-bottom: none;
+}
+
+/* Zone di navigazione "branded" (barra superiore mobile, menu laterale):
+   sfondo viola scuro, testo chiaro, indipendentemente dal tema chiaro del contenuto. */
+.app-topbar, .offcanvas {
+  background: linear-gradient(135deg, var(--fa-purple), var(--fa-purple-deep));
+  color: #fff;
+  --fa-text-dim: rgba(255, 255, 255, .72);
+}
+.offcanvas-header {
+  border-bottom: 1px solid rgba(255, 255, 255, .15);
 }
 
 .card, .list-group-item {
   background-color: var(--fa-surface);
   border-color: var(--fa-border);
-  color: #e7e9ee;
+  color: var(--fa-text);
 }
 
 .card-header {
@@ -54,20 +86,20 @@ button, a, .app-tabbar-item, .league-team-header, .player-search-item {
 
 .table {
   --bs-table-bg: transparent;
-  --bs-table-color: #e7e9ee;
+  --bs-table-color: var(--fa-text);
   --bs-table-border-color: var(--fa-border);
 }
 
 .form-control, .form-select {
-  background-color: var(--fa-surface-alt);
+  background-color: var(--fa-surface);
   border-color: var(--fa-border);
-  color: #e7e9ee;
+  color: var(--fa-text);
 }
 .form-control:focus, .form-select:focus {
-  background-color: var(--fa-surface-alt);
-  color: #fff;
-  border-color: var(--fa-accent-2);
-  box-shadow: 0 0 0 .2rem rgba(59,130,246,.25);
+  background-color: var(--fa-surface);
+  color: var(--fa-text);
+  border-color: var(--fa-primary);
+  box-shadow: 0 0 0 .2rem rgba(40, 100, 232, .25);
 }
 
 .auth-wrapper {
@@ -91,14 +123,14 @@ button, a, .app-tabbar-item, .league-team-header, .player-search-item {
   font-size: 1.6rem;
   font-weight: 700;
 }
-.credit-positive { color: var(--fa-accent); }
+.credit-positive { color: var(--fa-primary); }
 .credit-warn { color: var(--fa-warn); }
 .credit-danger { color: var(--fa-danger); }
 
 .badge-role-P { background-color: #eab308 !important; color: #111 !important; }
-.badge-role-D { background-color: #3b82f6 !important; }
-.badge-role-C { background-color: #22c55e !important; color: #111 !important; }
-.badge-role-A { background-color: #ef4444 !important; }
+.badge-role-D { background-color: var(--fa-primary) !important; }
+.badge-role-C { background-color: var(--fa-cyan) !important; }
+.badge-role-A { background-color: var(--fa-orange) !important; }
 
 /* Avatar giocatore (card fantacalcio.it quando disponibile, altrimenti pallino colorato per ruolo) */
 .player-avatar-wrap {
@@ -130,27 +162,78 @@ button, a, .app-tabbar-item, .league-team-header, .player-search-item {
   align-items: center;
   justify-content: center;
   font-weight: 800;
+  color: #111;
 }
 .player-avatar-sm .player-avatar-placeholder { font-size: .8rem; }
 .player-avatar-md .player-avatar-placeholder { font-size: 1.1rem; }
 .player-avatar-lg .player-avatar-placeholder { font-size: 1.8rem; }
 .player-avatar-xl .player-avatar-placeholder { font-size: 2.6rem; }
 
-.status-badge-DRAFT { background-color: #6b7280 !important; }
-.status-badge-OPEN { background-color: #3b82f6 !important; }
-.status-badge-LIVE { background-color: #ef4444 !important; }
-.status-badge-COMPLETED { background-color: #22c55e !important; color:#111 !important; }
-.status-badge-ARCHIVED { background-color: #374151 !important; }
+.status-badge-DRAFT { background-color: #94A3B8 !important; }
+.status-badge-OPEN { background-color: var(--fa-cyan) !important; }
+.status-badge-LIVE { background-color: var(--fa-orange) !important; }
+.status-badge-COMPLETED { background-color: var(--fa-primary-deep) !important; }
+.status-badge-ARCHIVED { background-color: #475569 !important; }
+
+/* Retinta dei pulsanti Bootstrap standard sulla palette brand */
+.btn-success, .btn-success:hover, .btn-success:focus {
+  background-color: var(--fa-orange);
+  border-color: var(--fa-orange);
+  color: #fff;
+}
+.btn-outline-success {
+  color: var(--fa-orange);
+  border-color: var(--fa-orange);
+}
+.btn-outline-success:hover, .btn-outline-success:focus {
+  background-color: var(--fa-orange);
+  border-color: var(--fa-orange);
+  color: #fff;
+}
+.btn-primary, .btn-primary:hover, .btn-primary:focus {
+  background-color: var(--fa-primary);
+  border-color: var(--fa-primary);
+}
+.btn-outline-primary {
+  color: var(--fa-primary);
+  border-color: var(--fa-primary);
+}
+.btn-outline-primary:hover, .btn-outline-primary:focus {
+  background-color: var(--fa-primary);
+  border-color: var(--fa-primary);
+}
+.btn-outline-info {
+  color: var(--fa-primary-deep);
+  border-color: var(--fa-cyan);
+}
+.btn-outline-info:hover, .btn-outline-info:focus {
+  background-color: var(--fa-cyan);
+  border-color: var(--fa-cyan);
+  color: #fff;
+}
+.btn-danger, .btn-outline-danger {
+  --bs-danger: var(--fa-danger);
+  --bs-danger-rgb: 220, 38, 38;
+}
 
 /* ---------------- Display TV ---------------- */
 .display-body {
-  background: radial-gradient(circle at top, #14181f 0%, #0a0c10 100%);
+  /* Variabili locali: le card/scritte della pagina display riusano gli stessi
+     nomi (--fa-surface, --fa-border, --fa-text-dim, --fa-accent) ma con toni
+     scuri/brillanti pensati per la visione a distanza su proiettore. */
+  --fa-surface: #2E1B66;
+  --fa-surface-alt: #3D2680;
+  --fa-border: #4A2E96;
+  --fa-text-dim: #C9BFE8;
+  --fa-accent: var(--fa-cyan);
+  background: radial-gradient(circle at top, var(--fa-purple) 0%, var(--fa-purple-deep) 55%, #170B36 100%);
+  color: #FFFFFF;
   font-size: 1.15rem;
   padding: 1rem 1.5rem;
 }
 .display-current {
-  background: linear-gradient(135deg, #1b2230, #10131a);
-  border: 2px solid var(--fa-accent);
+  background: linear-gradient(135deg, var(--fa-surface-alt), var(--fa-surface));
+  border: 2px solid var(--fa-cyan);
   border-radius: 1rem;
   padding: 1.5rem 2rem;
 }
@@ -181,6 +264,7 @@ button, a, .app-tabbar-item, .league-team-header, .player-search-item {
 .display-team-card .team-credits {
   font-size: 2rem;
   font-weight: 800;
+  color: var(--fa-orange);
 }
 .role-pill {
   display: inline-block;
@@ -214,7 +298,7 @@ button, a, .app-tabbar-item, .league-team-header, .player-search-item {
 .team-roster-price {
   font-size: .85rem;
   font-weight: 800;
-  color: var(--fa-accent);
+  color: var(--fa-orange);
   white-space: nowrap;
 }
 
@@ -230,23 +314,16 @@ button, a, .app-tabbar-item, .league-team-header, .player-search-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--fa-surface);
-  border-bottom: 1px solid var(--fa-border);
   padding: .7rem 1rem;
   padding-top: calc(.7rem + env(safe-area-inset-top));
 }
 .app-topbar-menu-btn {
   background: none;
   border: none;
-  color: #e7e9ee;
+  color: #fff;
   font-size: 1.5rem;
   line-height: 1;
   padding: .25rem .5rem;
-}
-
-.offcanvas {
-  background-color: var(--fa-surface);
-  color: #e7e9ee;
 }
 
 .app-content-mobile {
@@ -289,7 +366,7 @@ button, a, .app-tabbar-item, .league-team-header, .player-search-item {
   font-size: 1.35rem;
 }
 .app-tabbar-item.active {
-  color: var(--fa-accent);
+  color: var(--fa-primary);
 }
 
 .league-team-card {
@@ -306,7 +383,7 @@ button, a, .app-tabbar-item, .league-team-header, .player-search-item {
   gap: .5rem;
   background: none;
   border: none;
-  color: #e7e9ee;
+  color: var(--fa-text);
   text-align: left;
   padding: .75rem .9rem;
 }
@@ -350,20 +427,20 @@ button, a, .app-tabbar-item, .league-team-header, .player-search-item {
   transition: border-color .15s ease;
 }
 .team-pick-card:hover {
-  border-color: var(--fa-accent-2) !important;
+  border-color: var(--fa-cyan) !important;
 }
 .team-pick-card.selected {
-  border-color: var(--fa-accent) !important;
-  box-shadow: 0 0 0 .15rem rgba(34,197,94,.35);
+  border-color: var(--fa-primary) !important;
+  box-shadow: 0 0 0 .15rem rgba(40, 100, 232, .35);
 }
 
 .pulse-live {
   animation: pulse-live 1.6s infinite;
 }
 @keyframes pulse-live {
-  0% { box-shadow: 0 0 0 0 rgba(239,68,68,.5); }
-  70% { box-shadow: 0 0 0 10px rgba(239,68,68,0); }
-  100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+  0% { box-shadow: 0 0 0 0 rgba(255, 112, 67, .5); }
+  70% { box-shadow: 0 0 0 10px rgba(255, 112, 67, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 112, 67, 0); }
 }
 
 .text-dim { color: var(--fa-text-dim); }

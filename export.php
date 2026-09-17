@@ -52,8 +52,8 @@ if ($type === '') {
             <p class="text-dim mb-1">Export per singola squadra:</p>
             <?php foreach ($teams as $t): ?>
               <div class="d-flex gap-2">
-                <a class="btn btn-sm btn-outline-light flex-fill" href="?auction=<?= $auctionId ?>&type=csv_team&team=<?= (int)$t['id'] ?>">CSV <?= e($t['name']) ?></a>
-                <a class="btn btn-sm btn-outline-light" href="?auction=<?= $auctionId ?>&type=xlsx_team&team=<?= (int)$t['id'] ?>">XLSX</a>
+                <a class="btn btn-sm btn-outline-secondary flex-fill" href="?auction=<?= $auctionId ?>&type=csv_team&team=<?= (int)$t['id'] ?>">CSV <?= e($t['name']) ?></a>
+                <a class="btn btn-sm btn-outline-secondary" href="?auction=<?= $auctionId ?>&type=xlsx_team&team=<?= (int)$t['id'] ?>">XLSX</a>
               </div>
             <?php endforeach; ?>
           <?php else: ?>

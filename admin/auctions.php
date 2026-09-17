@@ -136,7 +136,7 @@ require __DIR__ . '/../partials/header.php';
           <a href="<?= url('/admin/auction.php') ?>?id=<?= (int)$a['id'] ?>" class="btn btn-outline-secondary btn-sm">Vedi storico</a>
         <?php endif; ?>
         <a href="<?= url('/display.php') ?>?auction=<?= (int)$a['id'] ?>" target="_blank" class="btn btn-outline-info btn-sm">📺 Display</a>
-        <a href="<?= url('/export.php') ?>?auction=<?= (int)$a['id'] ?>" class="btn btn-outline-light btn-sm">⬇️ Export</a>
+        <a href="<?= url('/export.php') ?>?auction=<?= (int)$a['id'] ?>" class="btn btn-outline-secondary btn-sm">⬇️ Export</a>
       </div>
     </div>
     <div class="card-body">

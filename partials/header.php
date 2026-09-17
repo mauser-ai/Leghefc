@@ -7,14 +7,14 @@ $pageTitle = $pageTitle ?? 'Fantacalcio Asta Manager';
 $bodyClass = $bodyClass ?? '';
 ?>
 <!DOCTYPE html>
-<html lang="it" data-bs-theme="dark">
+<html lang="it" data-bs-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0f1116">
+<meta name="theme-color" content="#32106B">
 <title><?= e($pageTitle) ?></title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
