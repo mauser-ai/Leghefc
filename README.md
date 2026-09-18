@@ -1,45 +1,74 @@
 # Fantacalcio Asta Manager
 
-Web app completa, senza database, per gestire un'asta del Fantacalcio tra amici:
-registrazione utenti, configurazione fantateam con settimane di anticipo, gestione
-di una o più aste, asta live in tempo reale, dashboard partecipante da smartphone,
-display generale per TV/proiettore, import del listone ed export finale delle rose.
+Web app completa per gestire un'asta del Fantacalcio tra amici: registrazione
+utenti, configurazione fantateam con settimane di anticipo, gestione di una o
+più aste, asta live in tempo reale, dashboard partecipante da smartphone,
+display generale per TV/proiettore, import del listone ed export finale delle
+rose.
 
-Tutta la persistenza è su **file CSV** in `/data`, protetti da lock (`flock`) per
-gestire scritture concorrenti da più dispositivi contemporaneamente. **Nessun
-database** (MySQL/PostgreSQL/SQLite) è utilizzato.
+Tutta la persistenza è su **database MySQL** (letture/scritture con
+transazioni atomiche). Il progetto è nato con storage su file CSV: quel
+nome (`CsvStorage`, `Schema::*_HEADERS`, i vecchi file `data/*.csv`) è
+rimasto come riferimento storico e come formato dei backup, ma dietro le
+quinte ogni riga vive ora in una tabella MySQL — vedi la sezione
+**Database** più sotto.
 
 ## Stack
 
 - PHP 8+ (nessun framework), HTML5, CSS3, Bootstrap 5 (via CDN)
 - JavaScript vanilla + `fetch` (polling AJAX, nessun WebSocket)
-- Storage: CSV su filesystem, con locking per scritture atomiche
+- Storage: MySQL 8 via PDO, con transazioni per le scritture concorrenti
 - Sessioni PHP per l'autenticazione (`password_hash` / `password_verify`)
 - PhpSpreadsheet (via Composer) per import/export XLSX — vedi punto 4
 
 ## 1. Requisiti
 
-- PHP 8.0 o superiore con estensioni standard (`mbstring`, `json`); l'estensione
-  `zip` è necessaria solo per l'export "ZIP con tutte le rose".
+- PHP 8.0 o superiore con estensioni standard (`mbstring`, `json`, `pdo_mysql`);
+  l'estensione `zip` è necessaria solo per l'export "ZIP con tutte le rose".
 - Server Apache (o qualsiasi hosting PHP classico). Funziona anche con il server
   di sviluppo integrato: `php -S localhost:8000`.
-- Nessun database richiesto.
+- Un database MySQL 5.7+/MariaDB 10.3+ (accesso host/porta/nome
+  database/utente/password).
 
 ## 2. Installazione
 
 1. Carica il contenuto del repository sull'hosting (o clonalo).
-2. Assicurati che la cartella `/data` (e le sue sottocartelle `backups`, `locks`,
-   `tmp_import`) siano **scrivibili** dal processo PHP:
+2. Crea un database MySQL (o usane uno già fornito dal tuo hosting) e copia
+   `config.local.example.php` in `config.local.php`, inserendo le credenziali
+   reali:
+   ```php
+   define('DB_HOST', 'il-tuo-host');
+   define('DB_PORT', 3306);
+   define('DB_NAME', 'il-tuo-database');
+   define('DB_USER', 'il-tuo-utente');
+   define('DB_PASS', 'la-tua-password');
+   ```
+   `config.local.php` **non va mai versionato su git** (contiene una password
+   in chiaro): è già escluso da `.gitignore`.
+3. Crea le tabelle eseguendo `sql/schema.sql` sul database (via phpMyAdmin,
+   riga di comando, o qualunque client MySQL). In alternativa, il primo avvio
+   di `migrate_to_db.php` (punto 5) le crea da solo se mancanti.
+4. Assicurati che la cartella `/data` (usata solo per gli snapshot di backup e
+   la cache degli avatar, non più per i dati veri e propri) sia **scrivibile**
+   dal processo PHP:
    ```bash
    chmod -R 775 data
    ```
-3. Nessuna configurazione di percorso è necessaria: l'app **rileva da sola**
+5. **Solo se stai migrando un'installazione precedente su CSV**: carica anche
+   i vecchi file `data/*.csv`, poi visita una volta `migrate_to_db.php` dal
+   browser (es. `https://tuosito.it/fanta/migrate_to_db.php`). Importa i dati
+   esistenti nel database appena creato, mostra quante righe ha importato per
+   ogni tabella, ed è sicuro da rivisitare per errore (salta le tabelle già
+   popolate, a meno di aggiungere `?force=1` all'URL per reimportarle da
+   capo). **Al termine elimina `migrate_to_db.php` dal server.** Per
+   un'installazione nuova senza dati pregressi questo passo si salta.
+6. Nessuna configurazione di percorso è necessaria: l'app **rileva da sola**
    se è installata in radice (`https://tuosito.it/`) o in una sottocartella
    (`https://tuosito.it/fanta/`), confrontando la cartella di `config.php` con
    la document root del sito, e adatta di conseguenza tutti i link, i redirect
    e le chiamate AJAX. Basta caricare i file dove preferisci (anche dentro una
    sottocartella come `/fanta/`) e funziona senza modifiche.
-4. Installa le dipendenze PHP con Composer (necessario per import/export XLSX,
+7. Installa le dipendenze PHP con Composer (necessario per import/export XLSX,
    incluso il template "Quotazioni Fantacalcio" usato in questo progetto):
    ```bash
    composer install
@@ -48,9 +77,9 @@ database** (MySQL/PostgreSQL/SQLite) è utilizzato.
    >100 MB): va generata a ogni deploy con `composer install`. Se il tuo
    hosting non ha accesso SSH/composer, esegui `composer install` in locale e
    carica l'intera cartella `vendor/` via FTP insieme al resto del progetto.
-   Senza questa cartella l'app funziona comunque al 100% usando **solo CSV**
-   (upload/export XLSX vengono disabilitati con un messaggio esplicito, senza
-   errori fatali).
+   Senza questa cartella l'app funziona comunque al 100% (che non ha nulla a
+   che vedere col database, richiesto sempre): solo l'upload/export XLSX
+   viene disabilitato con un messaggio esplicito, senza errori fatali.
 
 Le cartelle `/data`, `/lib`, `/partials` e `/scripts` includono un `.htaccess`
 che blocca l'accesso diretto via browser (i CSV contengono, tra l'altro, gli
@@ -254,11 +283,11 @@ quella singola classe (nessun'altra parte dell'app dipende da quel formato).
 
 ## 10. Backup
 
-Uno snapshot dei CSV principali viene creato automaticamente in
-`data/backups/<timestamp>/` ogni volta che un'operazione modifica i dati
-(creazione asta, acquisto, annullamento, modifica, import listone, cambio
-stato) — **mai** ad ogni polling AJAX. Vengono conservati al massimo gli
-ultimi 20 snapshot (i più vecchi vengono rimossi automaticamente).
+Uno snapshot delle tabelle principali viene esportato automaticamente in file
+CSV leggibili sotto `data/backups/<timestamp>/` ogni volta che un'operazione
+modifica i dati (creazione asta, acquisto, annullamento, modifica, import
+listone, cambio stato) — **mai** ad ogni polling AJAX. Vengono conservati al
+massimo gli ultimi 20 snapshot (i più vecchi vengono rimossi automaticamente).
 
 ## 11. Recovery
 
@@ -267,30 +296,35 @@ Per ripristinare uno stato precedente in caso di problemi:
 1. Ferma temporaneamente l'accesso all'app (o mettila in manutenzione).
 2. Individua lo snapshot desiderato in `data/backups/` (ordinati per
    timestamp).
-3. Copia i file `.csv` dallo snapshot su `data/`, sovrascrivendo quelli
-   correnti.
+3. Per ogni file `.csv` dello snapshot, svuota la tabella corrispondente sul
+   database e reimportane il contenuto (stesse colonne dell'header CSV) — con
+   phpMyAdmin/qualunque client MySQL, oppure con lo stesso script
+   `migrate_to_db.php?force=1` puntato temporaneamente su quella cartella.
 4. Riavvia l'accesso.
 
 Lo storico completo di tutte le azioni (chi ha fatto cosa e quando) resta
-comunque disponibile in `data/audit.csv`, che non viene mai troncato
+comunque disponibile nella tabella `audit`, che non viene mai troncata
 automaticamente.
 
-## 12. Struttura dei CSV
+## 12. Struttura del database
 
-Tutti i file vivono in `/data` e hanno sempre una riga di intestazione.
+Le tabelle sono definite in `sql/schema.sql`. Ogni tabella ha una colonna
+`id` auto-incrementale come chiave primaria (per alcune, indicato tra
+parentesi, è un dettaglio interno mai esposto all'applicazione, che non
+aveva un "id" nel vecchio CSV originale).
 
-| File | Colonne |
+| Tabella | Colonne (oltre a `id`) |
 |---|---|
-| `users.csv` | `id, nickname, password_hash, created_at, last_login, active, role` |
-| `teams.csv` | `id, user_id, name, coach_name, logo, created_at, updated_at, active` |
-| `auctions.csv` | `id, name, invite_code, status, auction_date, initial_budget, goalkeepers, defenders, midfielders, attackers, created_at, updated_at` |
-| `auction_teams.csv` | `id, auction_id, team_id, enabled, joined_at` |
-| `players.csv` | `id, name, real_team, role, quotation, fvm, external_id` (listone globale; `external_id` è l'id ufficiale fantacalcio.it, usato per l'avatar) |
-| `auction_players.csv` | `auction_id, player_id, available` (disponibilità **per asta**, non globale) |
-| `purchases.csv` | `id, auction_id, player_id, team_id, price, timestamp, active` (storico ufficiale; i crediti residui si calcolano sempre dinamicamente: `initial_budget - SUM(price WHERE active=1)`) |
-| `current_auction.csv` | `auction_id, player_id, updated_at` (giocatore attualmente chiamato, per asta) |
-| `settings.csv` | `key, value` |
-| `audit.csv` | `timestamp, user_id, action, auction_id, player_id, team_id, price, previous_value, new_value` |
+| `users` | `nickname, password_hash, created_at, last_login, active, role` |
+| `teams` | `user_id, name, coach_name, logo, created_at, updated_at, active` |
+| `auctions` | `name, invite_code, status, auction_date, initial_budget, goalkeepers, defenders, midfielders, attackers, created_at, updated_at` |
+| `auction_teams` | `auction_id, team_id, enabled, joined_at` |
+| `players` | `name, real_team, role, quotation, fvm, external_id` (listone globale; `external_id` è l'id ufficiale fantacalcio.it, usato per l'avatar) |
+| `auction_players` | `auction_id, player_id, available` (`id` interno; disponibilità **per asta**, non globale) |
+| `purchases` | `auction_id, player_id, team_id, price, timestamp, active` (storico ufficiale; i crediti residui si calcolano sempre dinamicamente: `initial_budget - SUM(price WHERE active=1)`) |
+| `current_auction` | `auction_id, player_id, updated_at` (`id` interno; giocatore attualmente chiamato, per asta) |
+| `settings` | `key, value` (`id` interno) |
+| `audit` | `timestamp, user_id, action, auction_id, player_id, team_id, price, previous_value, new_value` (`id` interno) |
 
 Stati asta possibili: `DRAFT → OPEN → LIVE → COMPLETED → ARCHIVED`.
 Ruoli giocatore: `P` (Portiere), `D` (Difensore), `C` (Centrocampista), `A` (Attaccante).
@@ -298,17 +332,21 @@ Ruoli giocatore: `P` (Portiere), `D` (Difensore), `C` (Centrocampista), `A` (Att
 ## 13. Architettura del codice
 
 ```
-/lib/CsvStorage.php        storage CSV centralizzato (locking, transazioni atomiche)
-/lib/Schema.php             nomi file e intestazioni colonna centralizzati
-/lib/Auth.php                sessioni, requireLogin()/requireAdmin()
-/lib/UserService.php         registrazione/login/attivazione utenti
-/lib/TeamService.php         gestione fantateam
-/lib/AuctionService.php      logica asta: acquisti, undo, svincoli, modifiche, budget
-/lib/PlayerService.php       listone e disponibilità per asta
-/lib/ImportService.php       parsing e mappatura import listone (CSV/XLSX)
-/lib/AuditService.php        scrittura storico azioni
-/lib/BackupService.php       snapshot periodici dei CSV
+/lib/Database.php           connessione PDO condivisa al database MySQL
+/lib/CsvStorage.php          storage centralizzato (nome storico, parla con MySQL: transazioni, lock di riga)
+/lib/Schema.php               nomi tabella e intestazioni colonna centralizzati
+/lib/Auth.php                  sessioni, requireLogin()/requireAdmin()
+/lib/UserService.php           registrazione/login/attivazione utenti
+/lib/TeamService.php           gestione fantateam
+/lib/AuctionService.php        logica asta: acquisti, undo, svincoli, modifiche, budget
+/lib/PlayerService.php         listone e disponibilità per asta
+/lib/ImportService.php         parsing e mappatura import listone (CSV/XLSX)
+/lib/AuditService.php          scrittura storico azioni
+/lib/BackupService.php         snapshot periodici delle tabelle in CSV
 /lib/exporters/FantacalcioExporter.php   formato export (unico punto da adattare)
+
+/sql/schema.sql       definizione delle tabelle MySQL
+/migrate_to_db.php    migrazione una tantum da vecchi CSV a database (da eliminare dopo l'uso)
 
 /api/*.php    endpoint JSON usati dal frontend via fetch/AJAX
 /admin/*.php  area amministrazione
@@ -338,7 +376,9 @@ endpoint API richiamano i servizi in `/lib`.
 Le operazioni che modificano l'asta (acquisto, annullamento, svincolo,
 modifica) sono racchiuse in un lock esclusivo per asta
 (`data/locks/auction_<id>.lock`) che garantisce l'atomicità dell'intera
-sequenza "leggi stato → valida → scrivi", anche quando coinvolge più file CSV
-contemporaneamente (`purchases.csv`, `auction_players.csv`, `audit.csv`). Non
+sequenza "leggi stato → valida → scrivi", anche quando coinvolge più tabelle
+contemporaneamente (`purchases`, `auction_players`, `audit`) — a cui si
+aggiungono le transazioni MySQL con lock di riga (`SELECT ... FOR UPDATE`) di
+`CsvStorage` stesso per ogni singola scrittura. Non
 è possibile acquistare due volte lo stesso giocatore, anche con più
 dispositivi collegati in contemporanea (8-12+ testati).

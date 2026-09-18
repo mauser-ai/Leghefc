@@ -1,24 +1,27 @@
 <?php
 /**
- * Gestione degli snapshot di backup dei file CSV.
+ * Gestione degli snapshot di backup dei dati.
  * Uno snapshot viene creato solo in occasione di operazioni che modificano
  * i dati (mai ad ogni polling AJAX), e ne vengono conservati al massimo
- * BACKUP_MAX_SNAPSHOTS.
+ * BACKUP_MAX_SNAPSHOTS. Dalla migrazione a MySQL, ogni snapshot esporta lo
+ * stato corrente delle tabelle in file CSV leggibili (stessa struttura di
+ * quando lo storage erano i CSV stessi), utili sia come backup consultabile
+ * a occhio sia come base per un eventuale ripristino manuale.
  */
 
 declare(strict_types=1);
 
 final class BackupService
 {
-    private const FILES_TO_BACKUP = [
-        Schema::USERS,
-        Schema::TEAMS,
-        Schema::AUCTIONS,
-        Schema::AUCTION_TEAMS,
-        Schema::PLAYERS,
-        Schema::AUCTION_PLAYERS,
-        Schema::PURCHASES,
-        Schema::CURRENT_AUCTION,
+    private const TABLES_TO_BACKUP = [
+        Schema::USERS => Schema::USERS_HEADERS,
+        Schema::TEAMS => Schema::TEAMS_HEADERS,
+        Schema::AUCTIONS => Schema::AUCTIONS_HEADERS,
+        Schema::AUCTION_TEAMS => Schema::AUCTION_TEAMS_HEADERS,
+        Schema::PLAYERS => Schema::PLAYERS_HEADERS,
+        Schema::AUCTION_PLAYERS => Schema::AUCTION_PLAYERS_HEADERS,
+        Schema::PURCHASES => Schema::PURCHASES_HEADERS,
+        Schema::CURRENT_AUCTION => Schema::CURRENT_AUCTION_HEADERS,
     ];
 
     public static function snapshot(string $reason = ''): void
@@ -29,11 +32,21 @@ final class BackupService
             mkdir($dir, 0775, true);
         }
 
-        foreach (self::FILES_TO_BACKUP as $file) {
-            $src = DATA_DIR . '/' . $file;
-            if (is_file($src)) {
-                copy($src, $dir . '/' . $file);
+        foreach (self::TABLES_TO_BACKUP as $file => $headers) {
+            $rows = CsvStorage::readAll($file, $headers);
+            $fh = fopen($dir . '/' . $file, 'w');
+            if ($fh === false) {
+                continue;
             }
+            fputcsv($fh, $headers, ',', '"', '\\');
+            foreach ($rows as $row) {
+                $line = [];
+                foreach ($headers as $col) {
+                    $line[] = $row[$col] ?? '';
+                }
+                fputcsv($fh, $line, ',', '"', '\\');
+            }
+            fclose($fh);
         }
 
         if ($reason !== '') {

@@ -1,6 +1,9 @@
 /vendor/
 /composer.lock
 
+# Credenziali del database: mai versionate. Copia config.local.example.php.
+/config.local.php
+
 # Snapshot di backup e file temporanei runtime: non vanno versionati,
 # ma le cartelle restano tracciate grazie ai .gitkeep.
 /data/backups/*

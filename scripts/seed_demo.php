@@ -30,21 +30,24 @@ $existingPlayers = CsvStorage::readAll(Schema::PLAYERS, Schema::PLAYERS_HEADERS)
 $hasRealPlayers = !empty($existingPlayers);
 
 if ($force) {
-    // players.csv NON viene mai toccato qui: un listone reale già importato
+    // players NON viene mai svuotato qui: un listone reale già importato
     // (via /import.php o da questo stesso script) non deve essere perso solo
     // perché si sta resettando utenti/team/aste demo.
     foreach ([
-        Schema::USERS, Schema::TEAMS, Schema::AUCTIONS, Schema::AUCTION_TEAMS,
-        Schema::AUCTION_PLAYERS, Schema::PURCHASES, Schema::SETTINGS,
-        Schema::CURRENT_AUCTION, Schema::AUDIT,
-    ] as $file) {
-        $path = CsvStorage::path($file);
-        if (is_file($path)) {
-            unlink($path);
-        }
+        [Schema::USERS, Schema::USERS_HEADERS],
+        [Schema::TEAMS, Schema::TEAMS_HEADERS],
+        [Schema::AUCTIONS, Schema::AUCTIONS_HEADERS],
+        [Schema::AUCTION_TEAMS, Schema::AUCTION_TEAMS_HEADERS],
+        [Schema::AUCTION_PLAYERS, Schema::AUCTION_PLAYERS_HEADERS],
+        [Schema::PURCHASES, Schema::PURCHASES_HEADERS],
+        [Schema::SETTINGS, Schema::SETTINGS_HEADERS],
+        [Schema::CURRENT_AUCTION, Schema::CURRENT_AUCTION_HEADERS],
+        [Schema::AUDIT, Schema::AUDIT_HEADERS],
+    ] as [$file, $headers]) {
+        CsvStorage::writeAll($file, [], $headers);
     }
-    if ($withFakePlayers && is_file(CsvStorage::path(Schema::PLAYERS))) {
-        unlink(CsvStorage::path(Schema::PLAYERS));
+    if ($withFakePlayers) {
+        CsvStorage::writeAll(Schema::PLAYERS, [], Schema::PLAYERS_HEADERS);
     }
 }
 

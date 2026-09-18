@@ -14,6 +14,16 @@ define('BACKUP_DIR', DATA_DIR . '/backups');
 define('LOCK_DIR', DATA_DIR . '/locks');
 define('AVATAR_CACHE_DIR', DATA_DIR . '/avatar_cache');
 
+// Credenziali del database (DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASS), mai
+// versionate: vedi config.local.example.php per il template da copiare.
+$localConfigFile = APP_ROOT . '/config.local.php';
+if (!is_file($localConfigFile)) {
+    http_response_code(500);
+    die('Configurazione mancante: copia config.local.example.php in config.local.php e inserisci le credenziali del database.');
+}
+require_once $localConfigFile;
+unset($localConfigFile);
+
 /**
  * Percorso base dell'app rispetto alla root del dominio, dedotto automaticamente
  * confrontando la cartella di questo file con la document root di Apache. Permette
