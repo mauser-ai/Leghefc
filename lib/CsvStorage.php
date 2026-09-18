@@ -17,6 +17,16 @@ class CsvStorage
     private const DELIMITER = ',';
 
     /**
+     * Cache in memoria per la durata della singola richiesta HTTP: evita di
+     * riaprire e riparsare lo stesso file CSV più volte nello stesso ciclo
+     * (es. players.csv/purchases.csv letti decine di volte per comporre le
+     * rose di tutte le squadre ad ogni poll di ogni partecipante). Invalidata
+     * automaticamente ad ogni scrittura sullo stesso file, quindi non può mai
+     * restituire dati non più validi all'interno della stessa richiesta.
+     */
+    private static array $cache = [];
+
+    /**
      * Percorso assoluto di un file dati, dato il nome file (es. "users.csv").
      */
     public static function path(string $filename): string
@@ -48,6 +58,10 @@ class CsvStorage
      */
     public static function readAll(string $filename, array $headers): array
     {
+        if (isset(self::$cache[$filename])) {
+            return self::$cache[$filename];
+        }
+
         self::ensure($filename, $headers);
         $path = self::path($filename);
 
@@ -75,6 +89,7 @@ class CsvStorage
         }
         fclose($fh);
 
+        self::$cache[$filename] = $rows;
         return $rows;
     }
 
@@ -117,6 +132,8 @@ class CsvStorage
 
         flock($lockHandle, LOCK_UN);
         fclose($lockHandle);
+
+        self::$cache[$filename] = $rows;
     }
 
     /**
@@ -172,6 +189,10 @@ class CsvStorage
 
         flock($fh, LOCK_UN);
         fclose($fh);
+
+        // Aggiorna la cache con lo stato reale appena letto sotto lock esclusivo
+        // (scritto o, se il mutator ha abortito, quello già presente su disco).
+        self::$cache[$filename] = $newRows ?? $rows;
 
         return $result;
     }
