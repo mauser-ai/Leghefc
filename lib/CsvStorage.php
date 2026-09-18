@@ -24,7 +24,7 @@ class CsvStorage
      * automaticamente ad ogni scrittura sullo stesso file, quindi non può mai
      * restituire dati non più validi all'interno della stessa richiesta.
      */
-    private static array $cache = [];
+    private static $cache = [];
 
     /**
      * Percorso assoluto di un file dati, dato il nome file (es. "users.csv").
